@@ -1,0 +1,99 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String   // Hashed password
+  role      String   @default("CANDIDATE") // "CANDIDATE" | "RECRUITER"
+  company   String?  // For recruiters
+  title     String?  // Candidate headline or Recruiter position
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  candidateSessions InterviewSession[] @relation("CandidateSessions")
+  recruiterJobs     Job[]              @relation("RecruiterJobs")
+}
+
+model Job {
+  id          String             @id @default(cuid())
+  title       String
+  company     String             @default("Job.Com")
+  department  String
+  location    String
+  type        String             // "Full-time", "Remote", "Contract"
+  salary      String
+  description String
+  status      String             @default("ACTIVE")
+  questionsJson String?
+  createdAt   DateTime           @default(now())
+
+  recruiterId String?
+  recruiter   User?              @relation("RecruiterJobs", fields: [recruiterId], references: [id], onDelete: SetNull)
+
+  sessions    InterviewSession[]
+
+  @@index([status])
+  @@index([department])
+}
+
+model InterviewSession {
+  id             String              @id @default(cuid())
+  token          String              @unique
+  candidateName  String
+  candidateEmail String
+  
+  candidateId    String?
+  candidate      User?               @relation("CandidateSessions", fields: [candidateId], references: [id], onDelete: SetNull)
+
+  jobId          String?
+  job            Job?                @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  status         String              @default("INVITED") // "INVITED", "IN_PROGRESS", "COMPLETED", "EXPIRED"
+  consent        Boolean             @default(false)
+  startedAt      DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime            @default(now())
+  questions      InterviewQuestion[]
+
+  @@index([candidateEmail])
+  @@index([status])
+  @@index([jobId])
+}
+
+model InterviewQuestion {
+  id               String              @id @default(cuid())
+  sessionId        String
+  session          InterviewSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  prompt           String
+  timeLimitSeconds Int                 @default(90)
+  retakesAllowed   Int                 @default(1)
+  order            Int                 @default(0)
+  responses        InterviewResponse[]
+
+  @@index([sessionId])
+}
+
+model InterviewResponse {
+  id          String            @id @default(cuid())
+  questionId  String
+  question    InterviewQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  attempt     Int
+  status      String            @default("RECORDING") // "RECORDING", "SUBMITTED", "ABANDONED"
+  storageKey  String?
+  videoUrl    String?
+  recordedAt  DateTime          @default(now())
+  submittedAt DateTime?
+  score       Int?
+  feedback    String?
+
+  @@index([questionId])
+}

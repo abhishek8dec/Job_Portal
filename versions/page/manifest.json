@@ -1,0 +1,222 @@
+{
+  "targetFile": "src/app/page.tsx",
+  "activeVersion": "v3.10.0-complete-user-friendly-suite",
+  "releases": [
+    {
+      "version": "v1.0.0-showcase",
+      "title": "Interactive Showcase & Demo Launchers",
+      "description": "Initial release with hero quick-actions (Candidate Room, Recruiter Desk, API Specs) and featured job listings.",
+      "file": "page.v1.0.0-showcase.tsx",
+      "createdAt": "2026-09-26T14:07:00.000Z",
+      "tags": [
+        "demo",
+        "showcase",
+        "v1.0.0",
+        "stable"
+      ]
+    },
+    {
+      "version": "v1.1.0-therecruit",
+      "title": "theRecruit Design System Restyle",
+      "description": "Adopted calm editorial theRecruit aesthetic: warm off-white canvas, serif headers, quiet cards, chips, and status pills",
+      "file": "page.v1.1.0-therecruit.tsx",
+      "createdAt": "2026-09-26T14:46:39.443Z"
+    },
+    {
+      "version": "v1.2.0-therecruit-complete",
+      "title": "Complete theRecruit Design System",
+      "description": "Full-spectrum editorial restyle conforming to recruit.theresume.io across all screens (Nav, Auth, Jobs, Recruiter, Interview Room, Candidate Dashboard)",
+      "file": "page.v1.2.0-therecruit-complete.tsx",
+      "createdAt": "2026-09-26T14:58:13.900Z"
+    },
+    {
+      "version": "v1.3.0-therecruit-dropdown-header",
+      "title": "theRecruit Dropdown Header",
+      "description": "Reference-exact theRecruit header with modular dropdown options, amber checkmark brand icon, active underline indicators, and START HIRING FREE button",
+      "file": "page.v1.3.0-therecruit-dropdown-header.tsx",
+      "createdAt": "2026-09-26T17:28:13.496Z"
+    },
+    {
+      "version": "v1.4.0-end-to-end-features",
+      "title": "Full End-to-End Hiring Loop & Dynamic Screening",
+      "description": "Complete interactive hiring loop: Job creator with custom video questions, 1-click candidate apply with instant room provisioning, question-by-question AI rubric evaluation, citation quotes, and recruiter review desk",
+      "file": "page.v1.4.0-end-to-end-features.tsx",
+      "createdAt": "2026-09-26T17:55:44.872Z"
+    },
+    {
+      "version": "v1.5.0-clean-header-placement",
+      "title": "Relocated Architecture Features to Header Options",
+      "description": "Removed technical architecture cards from main landing page. Enhanced WHY THERECRUIT and PRODUCT header dropdowns with the 4 tamper-proof architecture pillars and hiring loop features.",
+      "file": "page.v1.5.0-clean-header-placement.tsx",
+      "createdAt": "2026-09-26T17:59:10.227Z"
+    },
+    {
+      "version": "v1.6.0-brand-restored-clean",
+      "title": "Restored Job.Com Brand & Fixed Dev Overlay",
+      "description": "Restored brand name to Job.Com, updated nav to WHY JOB.COM, suppressed Next.js 15 dev overlay badge, and removed all floating debug cards for a clean UI.",
+      "file": "page.v1.6.0-brand-restored-clean.tsx",
+      "createdAt": "2026-09-26T18:15:01.595Z"
+    },
+    {
+      "version": "v1.7.0-clean-production-hero",
+      "title": "Replaced Prototype Launcher Buttons with Production CTAs",
+      "description": "Replaced the 3 developer demo launcher buttons in the hero with standard customer CTAs: Start Hiring Free and Browse Open Positions.",
+      "file": "page.v1.7.0-clean-production-hero.tsx",
+      "createdAt": "2026-09-26T18:16:36.196Z"
+    },
+    {
+      "version": "v1.8.0-audit-and-consistency-pass",
+      "title": "Complete Consistency & End-User Polish",
+      "description": "Unified brand identity to Job.Com, eliminated dev overlay cards, replaced developer launcher hero buttons with customer CTAs, built transparent Pricing section, restyled Specs with anchor IDs, unified footer, and fixed candidate post-interview routing.",
+      "file": "page.v1.8.0-audit-and-consistency-pass.tsx",
+      "createdAt": "2026-09-26T18:29:59.164Z"
+    },
+    {
+      "version": "v1.9.0-recruiter-candidate-dual-persona",
+      "title": "Recruiter & Candidate Dual-Persona Architecture",
+      "description": "Explicitly separated navigation into FOR RECRUITERS and FOR CANDIDATES, added Candidate Hub shortcut alongside Start Hiring Free, built Dual-Persona Pathway on the homepage, and added role URL parameter support in auth.",
+      "file": "page.v1.9.0-recruiter-candidate-dual-persona.tsx",
+      "createdAt": "2026-09-26T18:39:23.296Z"
+    },
+    {
+      "version": "v2.0.0-stable-baseline",
+      "title": "Job.Com Stable Baseline Milestone",
+      "description": "Clean editorial design, Job.Com branding, zero dev overlays (Next.js 15 '1 Issue' badge suppressed), production hero CTAs, active interview room banner, search, and verified 200 OK across all routes.",
+      "file": "page.v2.0.0-stable-baseline.tsx",
+      "createdAt": "2026-09-26T18:54:52.568Z"
+    },
+    {
+      "version": "v2.1.0-clean-eyebrows-and-ctas",
+      "title": "Clean Product Eyebrows & Production CTAs",
+      "description": "Removed unnatural '01 / PLATFORM ARCHITECTURE' and '02 / OPEN POSITIONS' numbered labels in favor of natural product copy: 'ASYNCHRONOUS VIDEO SCREENING' and 'FEATURED ROLES & OPPORTUNITIES'.",
+      "file": "page.v2.1.0-clean-eyebrows-and-ctas.tsx",
+      "createdAt": "2026-09-26T18:59:30.337Z"
+    },
+    {
+      "version": "v2.2.0-all-issues-fixed-and-cleaned",
+      "title": "All Logical Issues Resolved & Dead Code Removed",
+      "description": "Fixed persistent video streaming URLs from candidate to recruiter, persisted custom role questions from wizard, added recruiter Job Position queue filter, enhanced candidate status stages, guarded empty video submissions, and purged dead code.",
+      "file": "page.v2.2.0-all-issues-fixed-and-cleaned.tsx",
+      "createdAt": "2026-09-26T19:11:44.892Z"
+    },
+    {
+      "version": "v2.3.0-clean-hero-and-trust-strip",
+      "title": "Hero Eyebrow Fix and UX Enhancements",
+      "description": "Replaced out-of-context video screening eyebrow with refined pill badge, added 4 core architecture trust cards, live department filter counts, job assessment duration tags, and eliminated all remaining numbered eyebrow relics.",
+      "file": "page.v2.3.0-clean-hero-and-trust-strip.tsx",
+      "createdAt": "2026-09-26T19:22:44.993Z"
+    },
+    {
+      "version": "v2.4.0-recruiter-scores-and-candidate-timeline",
+      "title": "Candidate Timeline & Recruiter Scoring Polish",
+      "description": "Added visual 4-stage application progress stepper in candidate dashboard, average rubric score badges on applicant cards, and committee print summary export in recruiter desk.",
+      "file": "page.v2.4.0-recruiter-scores-and-candidate-timeline.tsx",
+      "createdAt": "2026-09-26T19:24:33.399Z"
+    },
+    {
+      "version": "v2.5.0-interactive-showcase-and-role-sharing",
+      "title": "Interactive Platform Showcase & 3-Step Walkthrough",
+      "description": "Added interactive dual-persona product preview (candidate room vs recruiter evaluation desk), 3-step 'How Job.Com Works' workflow section, public job board link, and copy role link action in recruiter workspace.",
+      "file": "page.v2.5.0-interactive-showcase-and-role-sharing.tsx",
+      "createdAt": "2026-09-26T19:28:36.611Z"
+    },
+    {
+      "version": "v2.6.0-resources-contact-section",
+      "title": "Contact Section Under Resources",
+      "description": "Added Contact Us option to Resources dropdown in navbar, created dedicated Contact & Candidate Support section with interactive inquiry form on homepage, and linked in footer.",
+      "file": "page.v2.6.0-resources-contact-section.tsx",
+      "createdAt": "2026-09-26T19:32:09.940Z"
+    },
+    {
+      "version": "v2.7.0-contact-dummy-data-and-faq",
+      "title": "Contact Section Rich Dummy Data and FAQ",
+      "description": "Populated Contact & Resources section with realistic corporate addresses (SF HQ, NY Studio), toll-free phone advisory line, dedicated department inboxes with SLA tags, 1-click demo inquiry presets, and a screening FAQ strip.",
+      "file": "page.v2.7.0-contact-dummy-data-and-faq.tsx",
+      "createdAt": "2026-09-26T19:34:00.148Z"
+    },
+    {
+      "version": "v2.8.0-interactive-dummy-demo-sandbox",
+      "title": "Interactive Dummy Demo Sandbox under Demo section",
+      "description": "Added 3-way interactive playground (Candidate Recording Sandbox, Recruiter Video Review & Rubric Desk, ATS Webhook Pipeline Simulator) with live timers, audio waveforms, retake counter, rubric scorebars, chapter bookmarks, synchronized transcripts, and Greenhouse/Lever/Ashby webhook simulator.",
+      "file": "page.v2.8.0-interactive-dummy-demo-sandbox.tsx",
+      "createdAt": "2026-09-26T19:43:28.636Z"
+    },
+    {
+      "version": "v2.9.0-consistent-editorial-typography",
+      "title": "Release v2.9.0-consistent-editorial-typography",
+      "description": "Snapshot created on 2026-09-26T19:53:45.174Z",
+      "file": "page.v2.9.0-consistent-editorial-typography.tsx",
+      "createdAt": "2026-09-26T19:53:45.176Z"
+    },
+    {
+      "version": "v3.0.0-official-brand-icon",
+      "title": "Release v3.0.0-official-brand-icon",
+      "description": "Snapshot created on 2026-09-26T20:03:10.167Z",
+      "file": "page.v3.0.0-official-brand-icon.tsx",
+      "createdAt": "2026-09-26T20:03:10.168Z"
+    },
+    {
+      "version": "v3.1.0-login-icon-and-seo-improvements",
+      "title": "Unified Brand Icon, Auth & SEO Improvements",
+      "description": "Added official Job.Com brand icon, unified sample login credentials, 4-persona test login presets, SEO metadata, and fixed backend route typechecks",
+      "file": "page.v3.1.0-login-icon-and-seo-improvements.tsx",
+      "createdAt": "2026-09-26T20:10:05.132Z"
+    },
+    {
+      "version": "v3.2.0-all-industry-freshers-and-experienced",
+      "title": "All Industry Jobs (Freshers & Experienced)",
+      "description": "Multi-industry platform supporting Accounting, Logistics, Mechanical, Pharma, Tech, and HR across Freshers (0-1 yrs) and Experienced (5+ yrs) professionals with dual filters and calibrated rubrics",
+      "file": "page.v3.2.0-all-industry-freshers-and-experienced.tsx",
+      "createdAt": "2026-09-26T20:21:48.983Z"
+    },
+    {
+      "version": "v3.3.0-widescreen-layout-and-command-sidebar",
+      "title": "Widescreen 1520px Grid & High-Utility Sidebar",
+      "description": "Expanded layout container from 1140px/1280px to 1520px widescreen grid, integrated 2-column layout in Featured Roles with Live Multi-Industry Recruitment Pulse, Sector Velocity Meters, Test Dataset Kit, and Campus 2026 Freshers Fast-Track",
+      "file": "page.v3.3.0-widescreen-layout-and-command-sidebar.tsx",
+      "createdAt": "2026-09-26T20:33:50.419Z"
+    },
+    {
+      "version": "v3.4.0-scalability-and-1000-user-concurrency",
+      "title": "Scalability & 1,000 Concurrent User Architecture",
+      "description": "In-memory caching with SWR, SQLite WAL mode with 10s busy timeout, streaming video upload pipeline (<64KB RAM/stream), Next.js compression, and 1000-user benchmark suite",
+      "file": "page.v3.4.0-scalability-and-1000-user-concurrency.tsx",
+      "createdAt": "2026-09-26T20:44:22.652Z"
+    },
+    {
+      "version": "v3.5.0-verified-1000-concurrent-users",
+      "title": "1,000 Simultaneous User Benchmark & Scalability Engine",
+      "description": "Single-Flight Promise deduplication cache, SQLite WAL mode with 10s busy timeout, streaming disk video uploads (<64KB RAM/stream), Next.js compression, and automated 1000 concurrent user benchmark passing at 100% reliability",
+      "file": "page.v3.5.0-verified-1000-concurrent-users.tsx",
+      "createdAt": "2026-09-26T20:48:35.829Z"
+    },
+    {
+      "version": "v3.7.0-free-ai-resume-builder-with-expert-guidance",
+      "title": "Release v3.7.0-free-ai-resume-builder-with-expert-guidance",
+      "description": "Snapshot created on 2026-09-27T06:00:33.034Z",
+      "file": "page.v3.7.0-free-ai-resume-builder-with-expert-guidance.tsx",
+      "createdAt": "2026-09-27T06:00:33.035Z"
+    },
+    {
+      "version": "v3.8.0-live-candidate-webcam-recording",
+      "title": "Candidate Browser Webcam Permission Flow, Live Mirror Video, Real-Time Audio Meter, and Video Playback Review",
+      "description": "Snapshot created on 2026-09-27T06:10:35.107Z",
+      "file": "page.v3.8.0-live-candidate-webcam-recording.tsx",
+      "createdAt": "2026-09-27T06:10:35.108Z"
+    },
+    {
+      "version": "v3.9.0-jargon-free-user-friendly-homepage",
+      "title": "Release v3.9.0-jargon-free-user-friendly-homepage",
+      "description": "Snapshot created on 2026-09-27T06:25:19.327Z",
+      "file": "page.v3.9.0-jargon-free-user-friendly-homepage.tsx",
+      "createdAt": "2026-09-27T06:25:19.328Z"
+    },
+    {
+      "version": "v3.10.0-complete-user-friendly-suite",
+      "title": "Release v3.10.0-complete-user-friendly-suite",
+      "description": "Snapshot created on 2026-09-27T06:37:16.500Z",
+      "file": "page.v3.10.0-complete-user-friendly-suite.tsx",
+      "createdAt": "2026-09-27T06:37:16.501Z"
+    }
+  ]
+}

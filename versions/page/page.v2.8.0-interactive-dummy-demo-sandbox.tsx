@@ -1,0 +1,3292 @@
+"use client";
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import {
+  Video,
+  ShieldAlert,
+  Clock,
+  RotateCcw,
+  CheckCircle2,
+  ArrowRight,
+  Sparkles,
+  Users,
+  Terminal,
+  Play,
+  Briefcase,
+  MapPin,
+  DollarSign,
+  Search,
+  X,
+  ExternalLink,
+  Copy,
+  PlusCircle,
+  Mail,
+  Phone,
+  HelpCircle,
+  ShieldCheck,
+  Check,
+  Pause,
+  RotateCw,
+  Mic,
+  Volume2,
+  FileText,
+  Send,
+  Layers,
+} from "lucide-react";
+import {
+  Eyebrow,
+  SectionHeader,
+  Card,
+  PrimaryButton,
+  SecondaryButton,
+  Chip,
+  StatusPill,
+  ScoreBar,
+} from "@/components/ds";
+
+interface JobItem {
+  id: string;
+  title: string;
+  company?: string;
+  department: string;
+  location: string;
+  type: string;
+  salary: string;
+  description: string;
+  token?: string;
+  tags?: string[];
+  _count?: {
+    sessions: number;
+  };
+}
+
+interface AppliedSession {
+  id: string;
+  token: string;
+  jobTitle: string;
+  candidateName: string;
+  candidateEmail: string;
+  interviewUrl: string;
+  date: string;
+}
+
+const FALLBACK_JOBS: JobItem[] = [
+  {
+    id: "job-1",
+    title: "Principal AI & Full-Stack Architect",
+    company: "Job.Com",
+    department: "Core Engineering",
+    location: "San Francisco, CA (Remote Friendly)",
+    type: "Full-Time",
+    salary: "$190,000 - $240,000",
+    description:
+      "Lead the architecture of Job.Com's next-gen asynchronous video screening, real-time media ingestion, and candidate assessment infrastructure.",
+    tags: ["TypeScript", "Next.js", "MediaRecorder", "Prisma"],
+  },
+  {
+    id: "job-2",
+    title: "Staff Systems Reliability & Cloud Architect",
+    company: "Job.Com",
+    department: "Infrastructure",
+    location: "Austin, TX / Remote",
+    type: "Full-Time",
+    salary: "$175,000 - $220,000",
+    description:
+      "Design resilient media ingestion pipelines, edge video encoding, and automated scaling for thousands of concurrent video interviews.",
+    tags: ["Kubernetes", "AWS S3", "WebRTC", "Go"],
+  },
+  {
+    id: "job-3",
+    title: "Senior Product Designer (Design Systems)",
+    company: "Job.Com",
+    department: "Product Experience",
+    location: "New York, NY / Hybrid",
+    type: "Full-Time",
+    salary: "$150,000 - $185,000",
+    description:
+      "Create human-centered, accessible candidate interview rooms and intuitive recruiter decision workspaces.",
+    tags: ["Figma", "Design Systems", "Accessibility", "Motion"],
+  },
+];
+
+const DEMO_QUESTIONS = [
+  {
+    title: "Distributed Systems & Ingestion",
+    difficulty: "High Difficulty",
+    timeLimit: 30,
+    prompt: "“Explain how you would architect a high-throughput, asynchronous video ingestion pipeline that gracefully handles intermittent cellular drops.”",
+    tip: "Focus on edge chunking, client buffers, and idempotent server assembly.",
+    sampleSynthesis:
+      "Candidate articulated asynchronous queuing with Kafka and dead-letter queues. Strong awareness of backpressure mechanisms, pre-signed S3 upload tokens, and client-side indexedDB buffering.",
+    score: 93,
+    scores: {
+      technical: 95,
+      resilience: 92,
+      clarity: 91,
+    },
+  },
+  {
+    title: "Concurrency & Distributed Locks",
+    difficulty: "Medium Difficulty",
+    timeLimit: 30,
+    prompt: "“How do you enforce single-use interview attempt tokens and prevent double-submission race conditions across concurrent client connections?”",
+    tip: "Discuss Redis leases, optimistic concurrency tokens, or PostgreSQL advisory locks.",
+    sampleSynthesis:
+      "Candidate proposed atomic compare-and-swap Redis token consumption with PostgreSQL row versioning. Clearly described anti-tamper token revocation.",
+    score: 91,
+    scores: {
+      technical: 93,
+      resilience: 90,
+      clarity: 89,
+    },
+  },
+  {
+    title: "Technical Trade-offs & Culture",
+    difficulty: "Senior Leadership",
+    timeLimit: 30,
+    prompt: "“Walk through an instance where you had to push back on an executive product deadline in order to remediate critical architectural technical debt.”",
+    tip: "Structure your answer with situation, business trade-off, and objective measurable outcome.",
+    sampleSynthesis:
+      "Well-structured answer utilizing STAR format. Articulated risk matrices to bridge communication gap between engineering reliability and executive product deadlines.",
+    score: 94,
+    scores: {
+      technical: 92,
+      resilience: 95,
+      clarity: 96,
+    },
+  },
+];
+
+const DEMO_CANDIDATES = [
+  {
+    name: "Elena Rostova",
+    role: "Staff Systems Architect",
+    department: "Core Engineering",
+    score: 95,
+    recommendation: "Strong Hire · Advance to Panel",
+    duration: "02:45",
+    chapters: [
+      { time: "00:15", title: "Architecture & Service Topology" },
+      { time: "00:54", title: "Network Partitions & Lease Expirations" },
+      { time: "01:42", title: "Observability, SLOs & Zero-Downtime" },
+    ],
+    transcript:
+      "“...In our previous architecture, we isolated media ingestion from metadata indexing using edge worker proxies with pre-signed S3 tokens. When a network partition occurred, the client maintained state in an indexedDB buffer and resumed multipart uploads with exponential backoff and jitter, preventing stampedes...”",
+    rubric: [
+      { label: "Systems Architecture & Modularity", score: 96 },
+      { label: "Failure Mode & Edge Case Resilience", score: 94 },
+      { label: "Verbal Articulation & Conciseness", score: 95 },
+    ],
+    highlights: [
+      "Deep mastery of distributed consistency trade-offs (CAP theorem in practice)",
+      "Proactively calculated memory requirements for client-side backpressure queues",
+      "Clear, structured verbal articulation with concise summaries",
+    ],
+    probe: "Recommended for Round 2: Ask about zero-downtime database schema migration strategy.",
+  },
+  {
+    name: "Alex Mercer",
+    role: "Principal AI & Full-Stack Architect",
+    department: "Infrastructure",
+    score: 91,
+    recommendation: "Strong Hire · Advance to Technical Deep Dive",
+    duration: "02:18",
+    chapters: [
+      { time: "00:10", title: "Inference Latency & Edge Cache" },
+      { time: "00:45", title: "Server-Enforced Timer Integrity" },
+      { time: "01:30", title: "MediaRecorder Chunk Checksums" },
+    ],
+    transcript:
+      "“...Client-side clocks cannot be trusted in high-stakes video evaluations. Our server issues a signed HMAC token when the prompt unlocks. Even if a candidate manipulates browser devtools, the server timestamp authority closes the ingestion window strictly on deadline...”",
+    rubric: [
+      { label: "Security & Anti-Tamper Design", score: 95 },
+      { label: "Full-Stack Reliability Engineering", score: 90 },
+      { label: "Product Empathy & Candidate UX", score: 88 },
+    ],
+    highlights: [
+      "Strong understanding of browser MediaRecorder constraints across WebKit & Chromium",
+      "Comprehensive cryptographic verification protocol for candidate session receipts",
+      "Pragmatic approach to graceful client degradation in low-bandwidth environments",
+    ],
+    probe: "Recommended for Round 2: Explore offline synchronization recovery under multi-minute disconnection.",
+  },
+  {
+    name: "Maya Lin",
+    role: "Senior Product Designer",
+    department: "Product Experience",
+    score: 88,
+    recommendation: "Round 2 Ready · Portfolio Presentation",
+    duration: "02:05",
+    chapters: [
+      { time: "00:12", title: "Accessible Video Controls & WCAG" },
+      { time: "00:40", title: "Cognitive Load & Stress Reduction" },
+      { time: "01:25", title: "Review Desk Workspace Architecture" },
+    ],
+    transcript:
+      "“...When candidates take an asynchronous video interview, cognitive anxiety is peak. We designed 10-second preparation countdowns, large visual mic volume indicators, and unambiguous retake budgets so applicants feel in control, not ambushed by software...”",
+    rubric: [
+      { label: "Design Systems & Token Architecture", score: 92 },
+      { label: "Accessibility & WCAG 2.1 AA Standards", score: 89 },
+      { label: "Cross-Functional Collaboration", score: 85 },
+    ],
+    highlights: [
+      "Empathetic user research methodology focused on candidate performance anxiety",
+      "Strict adherence to high-contrast guidelines on dark recording canvas",
+      "Thoughtful balance between employer governance and applicant comfort",
+    ],
+    probe: "Recommended for Round 2: Review component library deprecation workflows across cross-repo monorepos.",
+  },
+];
+
+const ATS_PREVIEWS = {
+  greenhouse: {
+    name: "Greenhouse Harvest API",
+    endpoint: "https://harvest.greenhouse.io/v1/candidates/98214/activity_feed/notes",
+    headers: {
+      "Authorization": "Bearer gh_live_7x892a01...",
+      "Content-Type": "application/json",
+      "X-JobCom-Signature": "sha256=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    },
+    payload: {
+      event: "screening.completed",
+      candidate_id: "cand_98214",
+      candidate_name: "Elena Rostova",
+      requisition_id: "req_eng_401",
+      stage: "ASYNC_SCREENING",
+      recommendation: "STRONG_HIRE",
+      overall_score: 95,
+      rubric: {
+        systems_architecture: 96,
+        failure_mode_resilience: 94,
+        verbal_articulation: 95,
+      },
+      recording_archive_url: "https://storage.job.com/vault/ses_ro_9512.webm",
+      transcript_summary: "Candidate articulated resilient chunked upload architecture with exponential backoff.",
+    },
+  },
+  lever: {
+    name: "Lever Postings & Opportunities API",
+    endpoint: "https://api.lever.co/v1/opportunities/opp_49102/stage",
+    headers: {
+      "Authorization": "Bearer lev_sec_89104...",
+      "Content-Type": "application/json",
+      "X-JobCom-Signature": "sha256=1a2b3c4d...",
+    },
+    payload: {
+      event: "video_screening.finalized",
+      opportunity_id: "opp_49102",
+      candidate_email: "elena.rostova@example.com",
+      to_stage_id: "panel_onsite_round",
+      hiring_rubric: {
+        overall_rating: 4.8,
+        dimensions: { technical: 96, communication: 95 },
+      },
+      feedback_note: "Job.Com AI screening passed with 95/100 score. Committee PDF generated.",
+    },
+  },
+  ashby: {
+    name: "Ashby Interview & Feedback API",
+    endpoint: "https://api.ashbyhq.com/interview_feedback.submit",
+    headers: {
+      "Ashby-Api-Key": "ashby_live_891...",
+      "Content-Type": "application/json",
+    },
+    payload: {
+      event: "interviewRound.completed",
+      candidateId: "ashby_c_7719",
+      interviewStage: "Take-Home Video Screening",
+      scorecard: {
+        recommendation: "Definitely Yes",
+        normalizedScore: 95,
+        evaluator: "Job.Com Calibrated AI Rubric",
+      },
+      attachmentUrl: "https://storage.job.com/dossier/elena-rostova-summary.pdf",
+    },
+  },
+  workday: {
+    name: "Workday Human Capital Management",
+    endpoint: "https://wd2-impl.workday.com/ccx/service/recruiting/v38.0",
+    headers: {
+      "SOAPAction": "Submit_Candidate_Assessment",
+      "Content-Type": "application/xml",
+    },
+    payload: {
+      event: "Assessment_Result_Update",
+      applicant_reference: "WD_APP_55102",
+      status: "ASSESSMENT_PASSED",
+      assessment_score: "95.0",
+      integration_status: "SYNCHRONIZED",
+    },
+  },
+};
+
+export default function HomePage() {
+  const [jobs, setJobs] = useState<JobItem[]>(FALLBACK_JOBS);
+  const [loadingJobs, setLoadingJobs] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDept, setSelectedDept] = useState("ALL");
+  const [demoTab, setDemoTab] = useState<"candidate" | "recruiter" | "ats">("candidate");
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">("annual");
+
+  // Candidate Sandbox State
+  const [demoSelectedQuestion, setDemoSelectedQuestion] = useState(0);
+  const [demoRecordingState, setDemoRecordingState] = useState<"idle" | "recording" | "review" | "analyzing" | "completed">("idle");
+  const [demoSecondsLeft, setDemoSecondsLeft] = useState(30);
+  const [demoRetakesUsed, setDemoRetakesUsed] = useState(0);
+
+  // Recruiter Sandbox State
+  const [demoCandidateIndex, setDemoCandidateIndex] = useState(0);
+  const [demoRecruiterPlaying, setDemoRecruiterPlaying] = useState(false);
+  const [demoRecruiterSpeed, setDemoRecruiterSpeed] = useState<"1.0x" | "1.25x" | "1.5x">("1.0x");
+  const [demoActiveChapter, setDemoActiveChapter] = useState(0);
+  const [demoDecisionStatus, setDemoDecisionStatus] = useState<string | null>(null);
+
+  // ATS Webhook Sandbox State
+  const [demoAtsProvider, setDemoAtsProvider] = useState<"greenhouse" | "lever" | "ashby" | "workday">("greenhouse");
+  const [demoWebhookPingStatus, setDemoWebhookPingStatus] = useState<"idle" | "sending" | "success">("idle");
+
+  // Candidate Sandbox Timer Effect
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    if (demoRecordingState === "recording") {
+      timer = setInterval(() => {
+        setDemoSecondsLeft((prev) => {
+          if (prev <= 1) {
+            setDemoRecordingState("review");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [demoRecordingState]);
+
+  const handleStartDemoRecording = () => {
+    setDemoSecondsLeft(30);
+    setDemoRecordingState("recording");
+  };
+
+  const handleStopDemoRecording = () => {
+    setDemoRecordingState("review");
+  };
+
+  const handleUseDemoRetake = () => {
+    if (demoRetakesUsed < 1) {
+      setDemoRetakesUsed((prev) => prev + 1);
+      setDemoSecondsLeft(30);
+      setDemoRecordingState("recording");
+    }
+  };
+
+  const handleSubmitDemoRecording = () => {
+    setDemoRecordingState("analyzing");
+    setTimeout(() => {
+      setDemoRecordingState("completed");
+    }, 1200);
+  };
+
+  const handleResetDemo = () => {
+    setDemoRecordingState("idle");
+    setDemoSecondsLeft(30);
+  };
+
+  const handleSendWebhookPing = () => {
+    setDemoWebhookPingStatus("sending");
+    setTimeout(() => {
+      setDemoWebhookPingStatus("success");
+      setTimeout(() => setDemoWebhookPingStatus("idle"), 4000);
+    }, 600);
+  };
+
+  // 1-Click Apply Modal State
+  const [selectedJobForApply, setSelectedJobForApply] = useState<JobItem | null>(null);
+  const [applicantName, setApplicantName] = useState("");
+  const [applicantEmail, setApplicantEmail] = useState("");
+  const [isApplying, setIsApplying] = useState(false);
+  const [applyResult, setApplyResult] = useState<{
+    token: string;
+    interviewUrl: string;
+    message: string;
+    alreadyApplied: boolean;
+  } | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  // Contact form state
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [contactSent, setContactSent] = useState(false);
+
+  const handleContactSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setContactSent(true);
+  };
+
+  const fillSampleInquiry = (type: "candidate" | "ats" | "rubric") => {
+    setContactSent(false);
+    if (type === "candidate") {
+      setContactName("Elena Rostova");
+      setContactEmail("elena.rostova@example.com");
+      setContactMessage("Hi Job.Com support, I noticed my webcam permissions were reset in Chrome on Mac. How can I ensure my microphone is calibrated before Question 2?");
+    } else if (type === "ats") {
+      setContactName("David Chen (VP Talent)");
+      setContactEmail("d.chen@apextechnologies.io");
+      setContactMessage("We run 150+ engineering interviews a month and want to connect Job.Com's async video screening directly into our Greenhouse ATS. What does enterprise onboarding look like?");
+    } else {
+      setContactName("Maya Patel (Head of People)");
+      setContactEmail("maya@scaleinnovations.com");
+      setContactMessage("Can we configure custom AI rubric criteria for staff-level systems design interviews with 3-minute video time limits and export printable PDF summaries for our committee?");
+    }
+  };
+
+  // Stored applied sessions
+  const [savedApplications, setSavedApplications] = useState<AppliedSession[]>([]);
+
+  // Fetch live jobs from API
+  useEffect(() => {
+    async function loadJobs() {
+      try {
+        setLoadingJobs(true);
+        const res = await fetch("/api/jobs");
+        const data = await res.json();
+        if (res.ok && data.jobs && data.jobs.length > 0) {
+          setJobs(data.jobs);
+        }
+      } catch (err) {
+        console.error("Failed to fetch jobs:", err);
+      } finally {
+        setLoadingJobs(false);
+      }
+    }
+
+    // Retrieve saved user info from localStorage if present
+    if (typeof window !== "undefined") {
+      const storedName = localStorage.getItem("JobCom_candidateName");
+      const storedEmail = localStorage.getItem("JobCom_candidateEmail");
+      if (storedName) setApplicantName(storedName);
+      if (storedEmail) setApplicantEmail(storedEmail);
+
+      const storedApps = localStorage.getItem("JobCom_applied_sessions");
+      if (storedApps) {
+        try {
+          setSavedApplications(JSON.parse(storedApps));
+        } catch (_) {}
+      }
+    }
+
+    loadJobs();
+  }, []);
+
+  // Handle 1-Click Apply Submission
+  const handleApplySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedJobForApply || !applicantName.trim() || !applicantEmail.trim()) return;
+
+    try {
+      setIsApplying(true);
+      const res = await fetch(`/api/jobs/${selectedJobForApply.id}/apply`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          candidateName: applicantName.trim(),
+          candidateEmail: applicantEmail.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to submit application");
+      }
+
+      // Save credentials in localStorage
+      if (typeof window !== "undefined") {
+        localStorage.setItem("JobCom_candidateName", applicantName.trim());
+        localStorage.setItem("JobCom_candidateEmail", applicantEmail.trim());
+
+        const newApp: AppliedSession = {
+          id: data.session?.id || data.token,
+          token: data.token,
+          jobTitle: selectedJobForApply.title,
+          candidateName: applicantName.trim(),
+          candidateEmail: applicantEmail.trim(),
+          interviewUrl: data.interviewUrl,
+          date: new Date().toLocaleDateString(),
+        };
+
+        const updated = [newApp, ...savedApplications.filter((a) => a.token !== data.token)];
+        setSavedApplications(updated);
+        localStorage.setItem("JobCom_applied_sessions", JSON.stringify(updated));
+      }
+
+      setApplyResult({
+        token: data.token,
+        interviewUrl: data.interviewUrl,
+        message: data.message,
+        alreadyApplied: data.alreadyApplied || false,
+      });
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Application error");
+    } finally {
+      setIsApplying(false);
+    }
+  };
+
+  const copyUrl = (url: string) => {
+    const fullUrl = `${window.location.origin}${url}`;
+    navigator.clipboard.writeText(fullUrl);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2500);
+  };
+
+  // Filter jobs by search and department
+  const filteredJobs = jobs.filter((job) => {
+    const query = searchQuery.toLowerCase();
+    const matchesQuery =
+      job.title.toLowerCase().includes(query) ||
+      job.department.toLowerCase().includes(query) ||
+      (job.tags && job.tags.some((t) => t.toLowerCase().includes(query)));
+
+    const matchesDept =
+      selectedDept === "ALL" ||
+      job.department.toLowerCase().includes(selectedDept.toLowerCase());
+
+    return matchesQuery && matchesDept;
+  });
+
+  const departments = ["ALL", "Engineering", "Infrastructure", "Product Experience", "AI Intelligence"];
+
+  return (
+    <main
+      className="ds-theme"
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "var(--paper)",
+        color: "var(--ink)",
+        paddingBottom: "80px",
+      }}
+    >
+      {/* Hero Section */}
+      <section
+        style={{
+          padding: "70px 24px 40px",
+          maxWidth: "1280px",
+          margin: "0 auto",
+          textAlign: "center",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "18px" }}>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "6px 14px",
+              borderRadius: "9999px",
+              backgroundColor: "var(--surface)",
+              border: "1px solid var(--border)",
+              fontSize: "0.8125rem",
+              color: "var(--ink)",
+              fontWeight: 500,
+              boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+            }}
+          >
+            <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: "var(--accent)" }} />
+            The Modern Standard for Video Interviews
+          </span>
+        </div>
+
+        <h1
+          className="font-serif tracking-tight"
+          style={{
+            fontFamily: "var(--font-serif)",
+            fontSize: "clamp(2.4rem, 4.5vw, 3.8rem)",
+            lineHeight: 1.15,
+            marginBottom: "20px",
+            color: "var(--ink)",
+            fontWeight: 600,
+            letterSpacing: "-0.025em",
+          }}
+        >
+          Fair, Tamper-Proof & High-Speed
+          <br />
+          <span>Video Interviews on Job.Com</span>
+        </h1>
+
+        <p
+          style={{
+            fontSize: "1.1rem",
+            color: "var(--muted)",
+            maxWidth: "720px",
+            margin: "0 auto 36px",
+            lineHeight: 1.6,
+          }}
+        >
+          Designed for modern engineering and product teams. The candidate timer is server-enforced, retakes are strictly guarded, and sequential question order prevents skipping.
+        </p>
+
+        {/* Primary Hero CTAs */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: "14px",
+            flexWrap: "wrap",
+            marginBottom: "32px",
+          }}
+        >
+          <Link
+            href="/recruiter"
+            className="ds-btn-primary"
+            style={{ padding: "11px 24px", fontSize: "0.9375rem" }}
+          >
+            Start Hiring Free
+            <ArrowRight size={15} />
+          </Link>
+          <a
+            href="#open-positions"
+            className="ds-btn-secondary"
+            style={{ padding: "11px 22px", fontSize: "0.9375rem", textDecoration: "none" }}
+          >
+            <Briefcase size={15} />
+            Browse Open Positions
+          </a>
+        </div>
+
+        {/* Core Architecture Guarantees & Trust Strip */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gap: "14px",
+            maxWidth: "1140px",
+            margin: "0 auto",
+            textAlign: "left",
+          }}
+        >
+          <div
+            style={{
+              padding: "16px",
+              backgroundColor: "var(--surface)",
+              borderRadius: "10px",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+              <Clock size={16} color="var(--accent)" />
+              <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--ink)" }}>Server-Enforced Timers</span>
+            </div>
+            <p style={{ fontSize: "0.8125rem", color: "var(--muted)", margin: 0, lineHeight: 1.45 }}>
+              Strict countdowns governed on the server prevent client-side timer manipulation or pauses.
+            </p>
+          </div>
+
+          <div
+            style={{
+              padding: "16px",
+              backgroundColor: "var(--surface)",
+              borderRadius: "10px",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+              <RotateCcw size={16} color="var(--accent)" />
+              <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--ink)" }}>Controlled Retake Quotas</span>
+            </div>
+            <p style={{ fontSize: "0.8125rem", color: "var(--muted)", margin: 0, lineHeight: 1.45 }}>
+              Recruiters set fixed retake allowances per question for natural, authentic responses.
+            </p>
+          </div>
+
+          <div
+            style={{
+              padding: "16px",
+              backgroundColor: "var(--surface)",
+              borderRadius: "10px",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+              <Sparkles size={16} color="var(--accent)" />
+              <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--ink)" }}>Calibrated AI Rubrics</span>
+            </div>
+            <p style={{ fontSize: "0.8125rem", color: "var(--muted)", margin: 0, lineHeight: 1.45 }}>
+              Standardized scoring across technical depth, problem-solving, and communication.
+            </p>
+          </div>
+
+          <div
+            style={{
+              padding: "16px",
+              backgroundColor: "var(--surface)",
+              borderRadius: "10px",
+              border: "1px solid var(--border)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+              <CheckCircle2 size={16} color="var(--accent)" />
+              <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--ink)" }}>Zero Scheduling Friction</span>
+            </div>
+            <p style={{ fontSize: "0.8125rem", color: "var(--muted)", margin: 0, lineHeight: 1.45 }}>
+              Candidates record on their own schedule; hiring teams review candidates asynchronously.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Interactive Platform Preview Section (Demo Hub) */}
+      <section
+        id="demo"
+        style={{
+          maxWidth: "1140px",
+          margin: "12px auto 44px",
+          padding: "0 24px",
+          scrollMarginTop: "80px",
+        }}
+      >
+        <div style={{ textAlign: "center", marginBottom: "28px" }}>
+          <Eyebrow>INTERACTIVE DEMO PLAYGROUND</Eyebrow>
+          <h2
+            className="font-serif tracking-tight"
+            style={{
+              fontFamily: "var(--font-serif)",
+              fontSize: "clamp(2rem, 3.5vw, 2.6rem)",
+              fontWeight: 600,
+              color: "var(--ink)",
+              margin: "6px 0 12px",
+              lineHeight: 1.2,
+            }}
+          >
+            Experience Job.Com in Real Time
+          </h2>
+          <p
+            style={{
+              color: "var(--muted)",
+              fontSize: "1rem",
+              maxWidth: "660px",
+              margin: "0 auto 24px",
+              lineHeight: 1.6,
+            }}
+          >
+            Test our tamper-proof video screening room as an applicant, evaluate submissions with AI rubrics as a hiring manager, or simulate enterprise ATS webhook event streaming.
+          </p>
+
+          {/* 3-Way Tab Switcher */}
+          <div
+            style={{
+              display: "inline-flex",
+              padding: "4px",
+              backgroundColor: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderRadius: "10px",
+              gap: "4px",
+              flexWrap: "wrap",
+              justifyContent: "center",
+            }}
+          >
+            <button
+              onClick={() => {
+                setDemoTab("candidate");
+                setDemoDecisionStatus(null);
+              }}
+              style={{
+                padding: "8px 18px",
+                borderRadius: "7px",
+                border: "none",
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                backgroundColor: demoTab === "candidate" ? "var(--ink)" : "transparent",
+                color: demoTab === "candidate" ? "var(--paper)" : "var(--muted)",
+                transition: "all 0.15s ease",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <Video size={15} />
+              Candidate Sandbox
+            </button>
+            <button
+              onClick={() => {
+                setDemoTab("recruiter");
+                setDemoDecisionStatus(null);
+              }}
+              style={{
+                padding: "8px 18px",
+                borderRadius: "7px",
+                border: "none",
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                backgroundColor: demoTab === "recruiter" ? "var(--ink)" : "transparent",
+                color: demoTab === "recruiter" ? "var(--paper)" : "var(--muted)",
+                transition: "all 0.15s ease",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <Sparkles size={15} />
+              Recruiter Evaluation Desk
+            </button>
+            <button
+              onClick={() => {
+                setDemoTab("ats");
+                setDemoDecisionStatus(null);
+              }}
+              style={{
+                padding: "8px 18px",
+                borderRadius: "7px",
+                border: "none",
+                fontSize: "0.875rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                backgroundColor: demoTab === "ats" ? "var(--ink)" : "transparent",
+                color: demoTab === "ats" ? "var(--paper)" : "var(--muted)",
+                transition: "all 0.15s ease",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <Terminal size={15} />
+              ATS Webhook Pipeline
+            </button>
+          </div>
+        </div>
+
+        {/* Tab 1: Candidate Sandbox */}
+        {demoTab === "candidate" && (
+          <Card
+            style={{
+              padding: "32px",
+              border: "1px solid var(--border)",
+              boxShadow: "0 8px 30px rgba(0,0,0,0.04)",
+              backgroundColor: "var(--paper)",
+            }}
+          >
+            {/* Question Selector Bar */}
+            <div style={{ marginBottom: "24px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "10px",
+                  marginBottom: "12px",
+                }}
+              >
+                <div>
+                  <span
+                    style={{
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      color: "var(--accent)",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                    }}
+                  >
+                    Select Assessment Prompt:
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <StatusPill variant="good">
+                    {DEMO_QUESTIONS[demoSelectedQuestion].difficulty}
+                  </StatusPill>
+                  <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+                    1 Retake Allowed
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                {DEMO_QUESTIONS.map((q, idx) => (
+                  <button
+                    key={q.title}
+                    onClick={() => {
+                      setDemoSelectedQuestion(idx);
+                      handleResetDemo();
+                    }}
+                    style={{
+                      padding: "8px 14px",
+                      borderRadius: "7px",
+                      border: demoSelectedQuestion === idx ? "1px solid var(--accent)" : "1px solid var(--border)",
+                      backgroundColor: demoSelectedQuestion === idx ? "var(--accent-soft)" : "var(--surface)",
+                      color: demoSelectedQuestion === idx ? "var(--accent)" : "var(--ink)",
+                      fontSize: "0.8125rem",
+                      fontWeight: demoSelectedQuestion === idx ? 600 : 500,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    Q{idx + 1}: {q.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Main Interactive Screen */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                gap: "28px",
+                alignItems: "start",
+              }}
+            >
+              {/* Left: Prompt & Real-Time Assessment Guidance */}
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                  <span
+                    style={{
+                      fontSize: "0.6875rem",
+                      fontWeight: 700,
+                      color: "var(--accent)",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                    }}
+                  >
+                    ACTIVE QUESTION #{demoSelectedQuestion + 1} OF 3
+                  </span>
+                </div>
+
+                <h3
+                  className="font-serif"
+                  style={{
+                    fontSize: "1.25rem",
+                    fontWeight: 600,
+                    color: "var(--ink)",
+                    margin: "0 0 14px",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {DEMO_QUESTIONS[demoSelectedQuestion].prompt}
+                </h3>
+
+                <div
+                  style={{
+                    padding: "12px 14px",
+                    backgroundColor: "var(--surface)",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border)",
+                    marginBottom: "20px",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      color: "var(--ink)",
+                      marginBottom: "4px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <Sparkles size={13} color="var(--accent)" /> Rubric Evaluation Hint:
+                  </div>
+                  <p style={{ fontSize: "0.8125rem", color: "var(--muted)", margin: 0, lineHeight: 1.45 }}>
+                    {DEMO_QUESTIONS[demoSelectedQuestion].tip}
+                  </p>
+                </div>
+
+                {/* Candidate Guarantees List */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px", fontSize: "0.8125rem", color: "var(--muted)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <Clock size={14} color="var(--accent)" />
+                    <span>Server-enforced deadline ({DEMO_QUESTIONS[demoSelectedQuestion].timeLimit}s max window)</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <RotateCcw size={14} color="var(--accent)" />
+                    <span>Attempt quota: {demoRetakesUsed === 0 ? "1 retake remaining" : "0 retakes remaining (quota used)"}</span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <ShieldCheck size={14} color="var(--accent)" />
+                    <span>Cryptographic session receipt issued upon completion</span>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: "24px", display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+                  <Link
+                    href="/interview/demo-candidate-1"
+                    className="ds-btn-secondary"
+                    style={{ padding: "8px 16px", fontSize: "0.8125rem", textDecoration: "none" }}
+                  >
+                    <ExternalLink size={13} /> Open Fullscreen Candidate Room
+                  </Link>
+                </div>
+              </div>
+
+              {/* Right: Live Interactive Video & Audio Simulator */}
+              <div
+                style={{
+                  backgroundColor: "#111111",
+                  borderRadius: "12px",
+                  padding: "20px",
+                  color: "#ffffff",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.25)",
+                }}
+              >
+                {/* Header Status Bar */}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "14px",
+                    borderBottom: "1px solid rgba(255,255,255,0.08)",
+                    paddingBottom: "12px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    {demoRecordingState === "recording" ? (
+                      <>
+                        <span
+                          style={{
+                            width: "8px",
+                            height: "8px",
+                            borderRadius: "50%",
+                            backgroundColor: "#ef4444",
+                            boxShadow: "0 0 8px #ef4444",
+                          }}
+                        />
+                        <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#ef4444", letterSpacing: "0.05em" }}>
+                          REC IN PROGRESS
+                        </span>
+                      </>
+                    ) : demoRecordingState === "analyzing" ? (
+                      <>
+                        <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#3b82f6" }} />
+                        <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#60a5fa" }}>
+                          AI EVALUATING...
+                        </span>
+                      </>
+                    ) : demoRecordingState === "completed" ? (
+                      <>
+                        <CheckCircle2 size={13} color="#10b981" />
+                        <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#10b981" }}>
+                          EVALUATION COMPLETE
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ width: "8px", height: "8px", borderRadius: "50%", backgroundColor: "#10b981" }} />
+                        <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "#9ca3af" }}>
+                          CAMERA STANDBY
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Monospace Countdown Timer */}
+                  <div
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "0.875rem",
+                      fontWeight: 600,
+                      color: demoSecondsLeft <= 10 && demoRecordingState === "recording" ? "#ef4444" : "#fbbf24",
+                      backgroundColor: "rgba(251, 191, 36, 0.12)",
+                      padding: "3px 10px",
+                      borderRadius: "6px",
+                      fontVariantNumeric: "tabular-nums",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <Clock size={12} />
+                    00:{demoSecondsLeft < 10 ? `0${demoSecondsLeft}` : demoSecondsLeft} / 00:30
+                  </div>
+                </div>
+
+                {/* Simulated Camera Canvas / Viewport */}
+                {demoRecordingState === "completed" ? (
+                  /* Completed State: Rich AI Rubric Result Card */
+                  <div
+                    style={{
+                      backgroundColor: "#1a1a1a",
+                      borderRadius: "8px",
+                      padding: "18px",
+                      border: "1px solid rgba(255,255,255,0.1)",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                      <div>
+                        <div style={{ fontSize: "0.6875rem", color: "#9ca3af", textTransform: "uppercase" }}>
+                          AI Rubric Overall Assessment
+                        </div>
+                        <div style={{ fontSize: "1.3rem", fontWeight: 700, color: "#ffffff" }}>
+                          {DEMO_QUESTIONS[demoSelectedQuestion].score} / 100 · Strong Hire
+                        </div>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: "0.6875rem",
+                          fontWeight: 700,
+                          padding: "3px 8px",
+                          borderRadius: "4px",
+                          backgroundColor: "rgba(16, 185, 129, 0.2)",
+                          color: "#34d399",
+                        }}
+                      >
+                        PASS · ROUND 2
+                      </span>
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "14px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "#d1d5db" }}>
+                        <span>Technical Depth &amp; Architecture</span>
+                        <span style={{ fontWeight: 600, color: "#34d399" }}>{DEMO_QUESTIONS[demoSelectedQuestion].scores.technical}%</span>
+                      </div>
+                      <div style={{ height: "6px", backgroundColor: "#2e2e2e", borderRadius: "9999px", overflow: "hidden" }}>
+                        <div style={{ width: `${DEMO_QUESTIONS[demoSelectedQuestion].scores.technical}%`, height: "100%", backgroundColor: "var(--accent)", borderRadius: "9999px" }} />
+                      </div>
+
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "#d1d5db" }}>
+                        <span>Failure Mode &amp; Resilience</span>
+                        <span style={{ fontWeight: 600, color: "#34d399" }}>{DEMO_QUESTIONS[demoSelectedQuestion].scores.resilience}%</span>
+                      </div>
+                      <div style={{ height: "6px", backgroundColor: "#2e2e2e", borderRadius: "9999px", overflow: "hidden" }}>
+                        <div style={{ width: `${DEMO_QUESTIONS[demoSelectedQuestion].scores.resilience}%`, height: "100%", backgroundColor: "var(--accent)", borderRadius: "9999px" }} />
+                      </div>
+
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "#d1d5db" }}>
+                        <span>Communication &amp; Articulation</span>
+                        <span style={{ fontWeight: 600, color: "#34d399" }}>{DEMO_QUESTIONS[demoSelectedQuestion].scores.clarity}%</span>
+                      </div>
+                      <div style={{ height: "6px", backgroundColor: "#2e2e2e", borderRadius: "9999px", overflow: "hidden" }}>
+                        <div style={{ width: `${DEMO_QUESTIONS[demoSelectedQuestion].scores.clarity}%`, height: "100%", backgroundColor: "var(--accent)", borderRadius: "9999px" }} />
+                      </div>
+                    </div>
+
+                    <p style={{ fontSize: "0.75rem", color: "#9ca3af", lineHeight: 1.45, margin: "0 0 14px", borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: "10px" }}>
+                      &quot;{DEMO_QUESTIONS[demoSelectedQuestion].sampleSynthesis}&quot;
+                    </p>
+
+                    <button
+                      onClick={handleResetDemo}
+                      style={{
+                        width: "100%",
+                        padding: "8px",
+                        borderRadius: "6px",
+                        border: "1px solid rgba(255,255,255,0.2)",
+                        backgroundColor: "#2a2a2a",
+                        color: "#ffffff",
+                        fontSize: "0.8125rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <RotateCw size={13} /> Reset Simulation / Test Another Prompt
+                    </button>
+                  </div>
+                ) : demoRecordingState === "analyzing" ? (
+                  /* Analyzing State */
+                  <div
+                    style={{
+                      height: "170px",
+                      borderRadius: "8px",
+                      backgroundColor: "#191919",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "12px",
+                      textAlign: "center",
+                      padding: "20px",
+                    }}
+                  >
+                    <Sparkles size={28} color="var(--accent)" className="animate-spin" />
+                    <div>
+                      <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "#ffffff", marginBottom: "4px" }}>
+                        Calibrating AI Rubric...
+                      </div>
+                      <div style={{ fontSize: "0.75rem", color: "#9ca3af" }}>
+                        Analyzing speech cadence, keyword density, and distributed architecture trade-offs.
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Idle, Recording, or Review Canvas */
+                  <div>
+                    <div
+                      style={{
+                        height: "150px",
+                        borderRadius: "8px",
+                        backgroundColor: "#181818",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        border: "1px dashed rgba(255,255,255,0.15)",
+                        marginBottom: "14px",
+                        position: "relative",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {demoRecordingState === "recording" ? (
+                        <>
+                          {/* Animated Soundwave Bars */}
+                          <div style={{ display: "flex", alignItems: "center", gap: "4px", height: "40px" }}>
+                            {[35, 65, 85, 45, 95, 75, 40, 60, 90, 50, 70, 30].map((h, i) => (
+                              <div
+                                key={i}
+                                style={{
+                                  width: "4px",
+                                  height: `${h}%`,
+                                  backgroundColor: "var(--accent)",
+                                  borderRadius: "2px",
+                                  animation: `pulse 0.6s ease-in-out infinite alternate ${i * 0.05}s`,
+                                }}
+                              />
+                            ))}
+                          </div>
+                          <span style={{ fontSize: "0.75rem", color: "#d1d5db", marginTop: "10px" }}>
+                            Microphone stream active · Audio gain calibrated
+                          </span>
+                        </>
+                      ) : demoRecordingState === "review" ? (
+                        <>
+                          <CheckCircle2 size={32} color="#10b981" style={{ marginBottom: "6px" }} />
+                          <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#ffffff" }}>
+                            Recording Captured (3.8 MB WebM)
+                          </span>
+                          <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>
+                            Ready to transmit for server AI evaluation
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <Video size={30} color="#9ca3af" style={{ marginBottom: "6px" }} />
+                          <span style={{ fontSize: "0.8125rem", color: "#e5e7eb", fontWeight: 500 }}>
+                            Webcam &amp; Microphone Preview Standby
+                          </span>
+                          <span style={{ fontSize: "0.6875rem", color: "#9ca3af" }}>
+                            Click below to begin real-time practice recording
+                          </span>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Action Controls */}
+                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                      {demoRecordingState === "idle" && (
+                        <button
+                          onClick={handleStartDemoRecording}
+                          style={{
+                            flex: 1,
+                            padding: "10px",
+                            borderRadius: "7px",
+                            border: "none",
+                            backgroundColor: "var(--accent)",
+                            color: "#ffffff",
+                            fontSize: "0.875rem",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "8px",
+                          }}
+                        >
+                          <Play size={14} fill="#ffffff" /> Start 30s Practice Recording
+                        </button>
+                      )}
+
+                      {demoRecordingState === "recording" && (
+                        <>
+                          <button
+                            onClick={handleStopDemoRecording}
+                            style={{
+                              flex: 1,
+                              padding: "10px",
+                              borderRadius: "7px",
+                              border: "none",
+                              backgroundColor: "#ef4444",
+                              color: "#ffffff",
+                              fontSize: "0.875rem",
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "8px",
+                            }}
+                          >
+                            <Pause size={14} /> Stop &amp; Review
+                          </button>
+                          {demoRetakesUsed < 1 && (
+                            <button
+                              onClick={handleUseDemoRetake}
+                              style={{
+                                padding: "10px 14px",
+                                borderRadius: "7px",
+                                border: "1px solid rgba(255,255,255,0.2)",
+                                backgroundColor: "#262626",
+                                color: "#ffffff",
+                                fontSize: "0.8125rem",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "6px",
+                              }}
+                            >
+                              <RotateCcw size={13} /> Retake (1 left)
+                            </button>
+                          )}
+                        </>
+                      )}
+
+                      {demoRecordingState === "review" && (
+                        <>
+                          <button
+                            onClick={handleSubmitDemoRecording}
+                            style={{
+                              flex: 1,
+                              padding: "10px",
+                              borderRadius: "7px",
+                              border: "none",
+                              backgroundColor: "var(--accent)",
+                              color: "#ffffff",
+                              fontSize: "0.875rem",
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "8px",
+                            }}
+                          >
+                            <Sparkles size={14} /> Submit to AI Evaluation Rubric
+                          </button>
+                          {demoRetakesUsed < 1 ? (
+                            <button
+                              onClick={handleUseDemoRetake}
+                              style={{
+                                padding: "10px 14px",
+                                borderRadius: "7px",
+                                border: "1px solid rgba(255,255,255,0.2)",
+                                backgroundColor: "#262626",
+                                color: "#ffffff",
+                                fontSize: "0.8125rem",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "6px",
+                              }}
+                            >
+                              <RotateCcw size={13} /> Re-record (1 left)
+                            </button>
+                          ) : (
+                            <button
+                              onClick={handleResetDemo}
+                              style={{
+                                padding: "10px 14px",
+                                borderRadius: "7px",
+                                border: "1px solid rgba(255,255,255,0.2)",
+                                backgroundColor: "#262626",
+                                color: "#ffffff",
+                                fontSize: "0.8125rem",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                              }}
+                            >
+                              Reset
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Tab 2: Recruiter Evaluation Desk */}
+        {demoTab === "recruiter" && (
+          <Card
+            style={{
+              padding: "32px",
+              border: "1px solid var(--border)",
+              boxShadow: "0 8px 30px rgba(0,0,0,0.04)",
+              backgroundColor: "var(--paper)",
+            }}
+          >
+            {/* Candidate Selector Switcher */}
+            <div style={{ marginBottom: "24px" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "10px",
+                  marginBottom: "12px",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    color: "var(--accent)",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                  }}
+                >
+                  Applicant Evaluation Queue:
+                </span>
+                <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>
+                  3 candidate screenings ready for committee review
+                </span>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "10px" }}>
+                {DEMO_CANDIDATES.map((cand, idx) => (
+                  <button
+                    key={cand.name}
+                    onClick={() => {
+                      setDemoCandidateIndex(idx);
+                      setDemoActiveChapter(0);
+                      setDemoDecisionStatus(null);
+                    }}
+                    style={{
+                      padding: "12px 14px",
+                      borderRadius: "8px",
+                      border: demoCandidateIndex === idx ? "2px solid var(--accent)" : "1px solid var(--border)",
+                      backgroundColor: demoCandidateIndex === idx ? "var(--accent-soft)" : "var(--surface)",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--ink)" }}>{cand.name}</div>
+                      <div style={{ fontSize: "0.75rem", color: "var(--muted)" }}>{cand.role}</div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <span
+                        style={{
+                          fontSize: "0.8125rem",
+                          fontWeight: 700,
+                          color: "var(--accent)",
+                          display: "block",
+                        }}
+                      >
+                        {cand.score}%
+                      </span>
+                      <span style={{ fontSize: "0.6875rem", color: "var(--muted)" }}>{cand.duration}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Decision Confirmation Toast if triggered */}
+            {demoDecisionStatus && (
+              <div
+                style={{
+                  padding: "12px 16px",
+                  borderRadius: "8px",
+                  backgroundColor: "rgba(16, 185, 129, 0.12)",
+                  border: "1px solid rgba(16, 185, 129, 0.3)",
+                  color: "#065f46",
+                  fontSize: "0.8125rem",
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: "20px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <CheckCircle2 size={16} color="#059669" />
+                  <span>{demoDecisionStatus}</span>
+                </div>
+                <button
+                  onClick={() => setDemoDecisionStatus(null)}
+                  style={{ background: "none", border: "none", color: "#065f46", cursor: "pointer", fontSize: "0.75rem" }}
+                >
+                  ✕ Dismiss
+                </button>
+              </div>
+            )}
+
+            {/* Candidate Review Workspace Grid */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                gap: "28px",
+                alignItems: "start",
+              }}
+            >
+              {/* Left Column: Simulated Video Player & Transcript */}
+              <div>
+                <div
+                  style={{
+                    backgroundColor: "#121212",
+                    borderRadius: "10px",
+                    padding: "18px",
+                    color: "#ffffff",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    marginBottom: "16px",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                    <div>
+                      <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "#ffffff" }}>
+                        {DEMO_CANDIDATES[demoCandidateIndex].name}
+                      </div>
+                      <div style={{ fontSize: "0.75rem", color: "#9ca3af" }}>
+                        Question 1 of 3: Technical Architecture
+                      </div>
+                    </div>
+                    <span style={{ fontSize: "0.6875rem", padding: "2px 8px", borderRadius: "4px", backgroundColor: "rgba(255,255,255,0.1)", color: "#e5e7eb" }}>
+                      HD 1080p · WebM
+                    </span>
+                  </div>
+
+                  {/* Simulated Screen with Play button */}
+                  <div
+                    style={{
+                      height: "140px",
+                      borderRadius: "6px",
+                      backgroundColor: "#1e1e1e",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      border: "1px solid rgba(255,255,255,0.06)",
+                      marginBottom: "12px",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => setDemoRecruiterPlaying(!demoRecruiterPlaying)}
+                  >
+                    <div
+                      style={{
+                        width: "44px",
+                        height: "44px",
+                        borderRadius: "50%",
+                        backgroundColor: demoRecruiterPlaying ? "#ef4444" : "var(--accent)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginBottom: "8px",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                      }}
+                    >
+                      {demoRecruiterPlaying ? <Pause size={18} fill="#ffffff" color="#ffffff" /> : <Play size={18} fill="#ffffff" color="#ffffff" style={{ marginLeft: "2px" }} />}
+                    </div>
+                    <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>
+                      {demoRecruiterPlaying ? "Streaming Video Recording (Click to Pause)" : "Click to Play Candidate Video Stream"}
+                    </span>
+                  </div>
+
+                  {/* Playback Controls & Speed Toggle */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.75rem", color: "#9ca3af" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <Volume2 size={14} color="#9ca3af" />
+                      <span>{DEMO_CANDIDATES[demoCandidateIndex].chapters[demoActiveChapter].time} / {DEMO_CANDIDATES[demoCandidateIndex].duration}</span>
+                    </div>
+
+                    <div style={{ display: "flex", gap: "4px" }}>
+                      {(["1.0x", "1.25x", "1.5x"] as const).map((spd) => (
+                        <button
+                          key={spd}
+                          onClick={() => setDemoRecruiterSpeed(spd)}
+                          style={{
+                            padding: "2px 6px",
+                            borderRadius: "4px",
+                            border: "none",
+                            backgroundColor: demoRecruiterSpeed === spd ? "var(--accent)" : "rgba(255,255,255,0.1)",
+                            color: demoRecruiterSpeed === spd ? "#ffffff" : "#9ca3af",
+                            fontSize: "0.6875rem",
+                            cursor: "pointer",
+                          }}
+                        >
+                          {spd}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Chapter Bookmarks */}
+                <div style={{ marginBottom: "14px" }}>
+                  <div style={{ fontSize: "0.6875rem", fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "6px" }}>
+                    Jump to Key Timestamp Bookmarks:
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {DEMO_CANDIDATES[demoCandidateIndex].chapters.map((ch, idx) => (
+                      <button
+                        key={ch.time}
+                        onClick={() => setDemoActiveChapter(idx)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          padding: "6px 10px",
+                          borderRadius: "6px",
+                          border: demoActiveChapter === idx ? "1px solid var(--accent)" : "1px solid var(--border)",
+                          backgroundColor: demoActiveChapter === idx ? "var(--accent-soft)" : "var(--surface)",
+                          fontSize: "0.75rem",
+                          textAlign: "left",
+                          cursor: "pointer",
+                          color: "var(--ink)",
+                        }}
+                      >
+                        <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--accent)" }}>{ch.time}</span>
+                        <span>{ch.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Synchronized Live Transcript Snippet */}
+                <div
+                  style={{
+                    padding: "12px",
+                    backgroundColor: "var(--surface)",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border)",
+                    fontSize: "0.8125rem",
+                    color: "var(--ink)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  <div style={{ fontSize: "0.6875rem", fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", marginBottom: "4px" }}>
+                    Synchronized Transcript:
+                  </div>
+                  <p style={{ margin: 0, fontStyle: "italic", color: "var(--ink)" }}>
+                    {DEMO_CANDIDATES[demoCandidateIndex].transcript}
+                  </p>
+                </div>
+              </div>
+
+              {/* Right Column: AI Rubric Breakdown & Decision Actions */}
+              <div>
+                <div
+                  style={{
+                    backgroundColor: "var(--surface)",
+                    borderRadius: "10px",
+                    padding: "20px",
+                    border: "1px solid var(--border)",
+                    marginBottom: "18px",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                    <div>
+                      <div style={{ fontSize: "0.75rem", color: "var(--muted)", textTransform: "uppercase" }}>
+                        Calibrated AI Assessment
+                      </div>
+                      <div style={{ fontSize: "1.35rem", fontWeight: 700, color: "var(--ink)" }}>
+                        {DEMO_CANDIDATES[demoCandidateIndex].score} / 100
+                      </div>
+                    </div>
+                    <StatusPill variant="good">
+                      {DEMO_CANDIDATES[demoCandidateIndex].recommendation}
+                    </StatusPill>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "16px" }}>
+                    {DEMO_CANDIDATES[demoCandidateIndex].rubric.map((r) => (
+                      <ScoreBar key={r.label} label={r.label} score={r.score} />
+                    ))}
+                  </div>
+
+                  <div style={{ borderTop: "1px solid var(--border)", paddingTop: "14px" }}>
+                    <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--ink)", marginBottom: "8px", textTransform: "uppercase" }}>
+                      Key Strengths &amp; Observations:
+                    </div>
+                    <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "6px", fontSize: "0.8125rem", color: "var(--muted)" }}>
+                      {DEMO_CANDIDATES[demoCandidateIndex].highlights.map((h, i) => (
+                        <li key={i} style={{ display: "flex", alignItems: "start", gap: "8px" }}>
+                          <Check size={14} color="var(--accent)" style={{ flexShrink: 0, marginTop: "2px" }} />
+                          <span>{h}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div style={{ marginTop: "14px", padding: "10px", backgroundColor: "var(--paper)", borderRadius: "6px", border: "1px solid var(--border)", fontSize: "0.75rem", color: "var(--ink)" }}>
+                    <span style={{ fontWeight: 600, color: "var(--accent)" }}>Round 2 Suggestion: </span>
+                    {DEMO_CANDIDATES[demoCandidateIndex].probe}
+                  </div>
+                </div>
+
+                {/* Recruiter 1-Click Action Buttons */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <button
+                    onClick={() => setDemoDecisionStatus(`Candidate ${DEMO_CANDIDATES[demoCandidateIndex].name} advanced to Round 2 (Panel Interview)`)}
+                    className="ds-btn-primary"
+                    style={{ width: "100%", justifyContent: "center", padding: "10px", fontSize: "0.875rem", cursor: "pointer" }}
+                  >
+                    <CheckCircle2 size={15} /> Advance {DEMO_CANDIDATES[demoCandidateIndex].name.split(" ")[0]} to Round 2
+                  </button>
+
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button
+                      onClick={() => setDemoDecisionStatus(`Evaluation summary PDF dossier generated for ${DEMO_CANDIDATES[demoCandidateIndex].name}`)}
+                      className="ds-btn-secondary"
+                      style={{ flex: 1, justifyContent: "center", padding: "9px", fontSize: "0.8125rem", cursor: "pointer" }}
+                    >
+                      <FileText size={14} /> Export PDF Dossier
+                    </button>
+                    <Link
+                      href="/recruiter"
+                      className="ds-btn-secondary"
+                      style={{ flex: 1, justifyContent: "center", padding: "9px", fontSize: "0.8125rem", textDecoration: "none" }}
+                    >
+                      <Users size={14} /> Full Recruiter Desk →
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Tab 3: ATS Webhook Pipeline */}
+        {demoTab === "ats" && (
+          <Card
+            style={{
+              padding: "32px",
+              border: "1px solid var(--border)",
+              boxShadow: "0 8px 30px rgba(0,0,0,0.04)",
+              backgroundColor: "var(--paper)",
+            }}
+          >
+            {/* ATS Switcher */}
+            <div style={{ marginBottom: "20px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", marginBottom: "12px" }}>
+                <div>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                    Connected ATS Platform:
+                  </span>
+                </div>
+                <StatusPill variant="good">
+                  Webhook Event: screening.completed
+                </StatusPill>
+              </div>
+
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                {(["greenhouse", "lever", "ashby", "workday"] as const).map((prov) => (
+                  <button
+                    key={prov}
+                    onClick={() => {
+                      setDemoAtsProvider(prov);
+                      setDemoWebhookPingStatus("idle");
+                    }}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: "7px",
+                      border: demoAtsProvider === prov ? "1px solid var(--accent)" : "1px solid var(--border)",
+                      backgroundColor: demoAtsProvider === prov ? "var(--accent-soft)" : "var(--surface)",
+                      color: demoAtsProvider === prov ? "var(--accent)" : "var(--ink)",
+                      fontSize: "0.8125rem",
+                      fontWeight: demoAtsProvider === prov ? 700 : 500,
+                      cursor: "pointer",
+                      textTransform: "capitalize",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    {prov === "greenhouse" ? "Greenhouse" : prov === "lever" ? "Lever" : prov === "ashby" ? "Ashby" : "Workday"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Webhook Endpoint & JSON Payload Box */}
+            <div
+              style={{
+                backgroundColor: "#111111",
+                borderRadius: "10px",
+                padding: "20px",
+                color: "#ffffff",
+                border: "1px solid rgba(255,255,255,0.12)",
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.8125rem",
+                marginBottom: "20px",
+                overflowX: "auto",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", paddingBottom: "12px", marginBottom: "14px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ color: "#34d399", fontWeight: 700 }}>POST</span>
+                  <span style={{ color: "#9ca3af" }}>{ATS_PREVIEWS[demoAtsProvider].endpoint}</span>
+                </div>
+                <span style={{ fontSize: "0.6875rem", color: "#9ca3af" }}>HTTPS / JSON</span>
+              </div>
+
+              <pre style={{ margin: 0, color: "#d1d5db", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
+                {JSON.stringify(ATS_PREVIEWS[demoAtsProvider].payload, null, 2)}
+              </pre>
+            </div>
+
+            {/* Test Webhook Button & Simulated Response */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "14px" }}>
+              <div style={{ fontSize: "0.8125rem", color: "var(--muted)" }}>
+                Payloads are cryptographically signed with HMAC-SHA256 headers for enterprise audit compliance.
+              </div>
+
+              <button
+                onClick={handleSendWebhookPing}
+                disabled={demoWebhookPingStatus === "sending"}
+                className="ds-btn-primary"
+                style={{ padding: "9px 20px", fontSize: "0.875rem", cursor: "pointer" }}
+              >
+                {demoWebhookPingStatus === "sending" ? (
+                  <>
+                    <Sparkles size={14} className="animate-spin" /> Dispatching HTTP POST...
+                  </>
+                ) : demoWebhookPingStatus === "success" ? (
+                  <>
+                    <CheckCircle2 size={14} color="#10b981" /> HTTP 200 OK (38ms)
+                  </>
+                ) : (
+                  <>
+                    <Send size={14} /> Send Test Webhook Ping
+                  </>
+                )}
+              </button>
+            </div>
+
+            {demoWebhookPingStatus === "success" && (
+              <div
+                style={{
+                  marginTop: "16px",
+                  padding: "12px 16px",
+                  borderRadius: "8px",
+                  backgroundColor: "rgba(16, 185, 129, 0.1)",
+                  border: "1px solid rgba(16, 185, 129, 0.25)",
+                  color: "#065f46",
+                  fontSize: "0.8125rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                }}
+              >
+                <CheckCircle2 size={16} color="#059669" />
+                <span>
+                  <strong>Webhook Delivered Successfully!</strong> Response code: <code>200 OK</code>. Candidate Elena Rostova synchronized to {ATS_PREVIEWS[demoAtsProvider].name} in 38ms.
+                </span>
+              </div>
+            )}
+          </Card>
+        )}
+
+        {/* 3-Step Walkthrough: How Job.Com Works */}
+        <div style={{ marginTop: "44px" }}>
+          <div style={{ textAlign: "center", marginBottom: "24px" }}>
+            <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              STREAMLINED HIRING WORKFLOW
+            </span>
+            <h2 className="font-serif" style={{ fontSize: "1.75rem", fontWeight: 600, color: "var(--ink)", margin: "4px 0 0" }}>
+              How Job.Com Works
+            </h2>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px" }}>
+            <div style={{ padding: "22px", backgroundColor: "var(--surface)", borderRadius: "10px", border: "1px solid var(--border)" }}>
+              <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--accent)", marginBottom: "8px" }}>01 / CONFIGURE</div>
+              <h4 className="font-serif" style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--ink)", margin: "0 0 8px" }}>
+                Post Role & Custom Questions
+              </h4>
+              <p style={{ fontSize: "0.8125rem", color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>
+                Recruiters craft position-calibrated prompts, set strict answer timers (e.g. 90s - 180s), and specify retake quotas.
+              </p>
+            </div>
+
+            <div style={{ padding: "22px", backgroundColor: "var(--surface)", borderRadius: "10px", border: "1px solid var(--border)" }}>
+              <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--accent)", marginBottom: "8px" }}>02 / RECORD</div>
+              <h4 className="font-serif" style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--ink)", margin: "0 0 8px" }}>
+                On-Demand Video Screening
+              </h4>
+              <p style={{ fontSize: "0.8125rem", color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>
+                Applicants take the screening room whenever ready. Camera check, server timers, and sequential question order ensure fairness.
+              </p>
+            </div>
+
+            <div style={{ padding: "22px", backgroundColor: "var(--surface)", borderRadius: "10px", border: "1px solid var(--border)" }}>
+              <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--accent)", marginBottom: "8px" }}>03 / DECIDE</div>
+              <h4 className="font-serif" style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--ink)", margin: "0 0 8px" }}>
+                AI Rubrics & Shortlisting
+              </h4>
+              <p style={{ fontSize: "0.8125rem", color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>
+                Hiring managers review persistent recordings, scorecards, and move candidates to Round 2 with 1-click status transitions.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Pre-Configured Demo Scenarios Grid */}
+        <div style={{ marginTop: "44px", borderTop: "1px solid var(--border)", paddingTop: "36px" }}>
+          <div style={{ textAlign: "center", marginBottom: "22px" }}>
+            <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              INTERACTIVE DEMO SANDBOX
+            </span>
+            <h3 className="font-serif" style={{ fontSize: "1.6rem", fontWeight: 600, color: "var(--ink)", margin: "4px 0 0" }}>
+              Explore Pre-Configured Demo Sessions
+            </h3>
+            <p style={{ color: "var(--muted)", fontSize: "0.875rem", marginTop: "6px" }}>
+              Test both sides of Job.Com: experience live candidate video screening or evaluate submissions as a hiring manager.
+            </p>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "18px" }}>
+            {/* Demo 1 */}
+            <Card style={{ padding: "20px", display: "flex", flexDirection: "column", justifyContent: "space-between", border: "1px solid var(--border)", backgroundColor: "var(--surface)" }}>
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                  <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "var(--accent)", textTransform: "uppercase" }}>DEMO 01 · CANDIDATE</span>
+                  <StatusPill variant="good">Live Camera</StatusPill>
+                </div>
+                <h4 className="font-serif" style={{ fontSize: "1.05rem", fontWeight: 600, color: "var(--ink)", margin: "0 0 4px" }}>
+                  Alex Mercer (Live Screen)
+                </h4>
+                <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginBottom: "10px" }}>
+                  Principal AI Architect · 3 Questions
+                </div>
+                <p style={{ fontSize: "0.8125rem", color: "var(--muted)", margin: 0, lineHeight: 1.45 }}>
+                  Live webcam feed, real-time microphone volume visualizer, and server-enforced countdown timer.
+                </p>
+              </div>
+              <Link
+                href="/interview/demo-candidate-1"
+                className="ds-btn-primary"
+                style={{ width: "100%", justifyContent: "center", padding: "8px", fontSize: "0.8125rem", marginTop: "16px", textDecoration: "none" }}
+              >
+                <Play size={13} fill="#ffffff" /> Launch Candidate Demo
+              </Link>
+            </Card>
+
+            {/* Demo 2 */}
+            <Card style={{ padding: "20px", display: "flex", flexDirection: "column", justifyContent: "space-between", border: "1px solid var(--border)", backgroundColor: "var(--surface)" }}>
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                  <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "var(--accent)", textTransform: "uppercase" }}>DEMO 02 · RECRUITER</span>
+                  <StatusPill variant="good">Score 94%</StatusPill>
+                </div>
+                <h4 className="font-serif" style={{ fontSize: "1.05rem", fontWeight: 600, color: "var(--ink)", margin: "0 0 4px" }}>
+                  Elena Rostova (Review)
+                </h4>
+                <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginBottom: "10px" }}>
+                  Senior Full-Stack Architect · Video Ready
+                </div>
+                <p style={{ fontSize: "0.8125rem", color: "var(--muted)", margin: 0, lineHeight: 1.45 }}>
+                  Stream recorded video responses, inspect automated rubric scorebars, and export committee PDF summary.
+                </p>
+              </div>
+              <Link
+                href="/recruiter"
+                className="ds-btn-secondary"
+                style={{ width: "100%", justifyContent: "center", padding: "8px", fontSize: "0.8125rem", marginTop: "16px", textDecoration: "none" }}
+              >
+                <Sparkles size={13} color="var(--accent)" /> Open Review Desk Demo
+              </Link>
+            </Card>
+
+            {/* Demo 3 */}
+            <Card style={{ padding: "20px", display: "flex", flexDirection: "column", justifyContent: "space-between", border: "1px solid var(--border)", backgroundColor: "var(--surface)" }}>
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                  <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "var(--accent)", textTransform: "uppercase" }}>DEMO 03 · PORTAL</span>
+                  <StatusPill variant="neutral">Stage Tracker</StatusPill>
+                </div>
+                <h4 className="font-serif" style={{ fontSize: "1.05rem", fontWeight: 600, color: "var(--ink)", margin: "0 0 4px" }}>
+                  Candidate Tracking Portal
+                </h4>
+                <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginBottom: "10px" }}>
+                  Self-Service Dashboard · alex.mercer
+                </div>
+                <p style={{ fontSize: "0.8125rem", color: "var(--muted)", margin: 0, lineHeight: 1.45 }}>
+                  Inspect the 4-stage application progress stepper: Applied → Video Screening → Review → Decision.
+                </p>
+              </div>
+              <Link
+                href="/candidate/dashboard?email=alex.mercer@example.com"
+                className="ds-btn-secondary"
+                style={{ width: "100%", justifyContent: "center", padding: "8px", fontSize: "0.8125rem", marginTop: "16px", textDecoration: "none" }}
+              >
+                <Users size={13} /> View Portal Demo
+              </Link>
+            </Card>
+
+            {/* Demo 4 */}
+            <Card style={{ padding: "20px", display: "flex", flexDirection: "column", justifyContent: "space-between", border: "1px solid var(--border)", backgroundColor: "var(--surface)" }}>
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                  <span style={{ fontSize: "0.6875rem", fontWeight: 600, color: "var(--accent)", textTransform: "uppercase" }}>DEMO 04 · SECURITY</span>
+                  <StatusPill variant="neutral">Anti-Tamper</StatusPill>
+                </div>
+                <h4 className="font-serif" style={{ fontSize: "1.05rem", fontWeight: 600, color: "var(--ink)", margin: "0 0 4px" }}>
+                  Anti-Tamper Engine Audit
+                </h4>
+                <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginBottom: "10px" }}>
+                  Server Timestamp Authority · Retakes
+                </div>
+                <p style={{ fontSize: "0.8125rem", color: "var(--muted)", margin: 0, lineHeight: 1.45 }}>
+                  Inspect technical specifications: server deadline authority, sequential question locks, and cloud uploads.
+                </p>
+              </div>
+              <Link
+                href="/specs"
+                className="ds-btn-secondary"
+                style={{ width: "100%", justifyContent: "center", padding: "8px", fontSize: "0.8125rem", marginTop: "16px", textDecoration: "none" }}
+              >
+                <ShieldCheck size={13} color="var(--accent)" /> View Technical Audit
+              </Link>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Active Screening Rooms Banner (If candidate has applied previously) */}
+      {savedApplications.length > 0 && (
+        <section
+          style={{
+            maxWidth: "1280px",
+            margin: "0 auto 24px",
+            padding: "0 24px",
+          }}
+        >
+          <Card
+            style={{
+              padding: "16px 20px",
+              backgroundColor: "var(--surface)",
+              border: "1px solid var(--accent)",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: "16px",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "8px",
+                  backgroundColor: "var(--accent-soft)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "var(--accent)",
+                }}
+              >
+                <Video size={18} />
+              </div>
+              <div>
+                <div style={{ fontSize: "0.8125rem", color: "var(--accent)", fontWeight: 600 }}>
+                  ACTIVE INTERVIEW SESSION FOUND
+                </div>
+                <div style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--ink)" }}>
+                  {savedApplications[0].jobTitle} ({savedApplications[0].token})
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              <Link
+                href={savedApplications[0].interviewUrl}
+                className="ds-btn-primary"
+                style={{ padding: "8px 16px", fontSize: "0.875rem" }}
+              >
+                <Play size={14} fill="#ffffff" />
+                Resume Screening Room
+              </Link>
+              <Link
+                href={`/candidate/dashboard?email=${encodeURIComponent(savedApplications[0].candidateEmail)}`}
+                className="ds-btn-secondary"
+                style={{ padding: "8px 14px", fontSize: "0.875rem" }}
+              >
+                View Status
+              </Link>
+            </div>
+          </Card>
+        </section>
+      )}
+
+      {/* Search Bar & Department Filter Section */}
+      <section
+        style={{
+          maxWidth: "1280px",
+          margin: "0 auto 36px",
+          padding: "0 24px",
+        }}
+      >
+        <Card style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: "14px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <Search size={18} color="var(--muted)" style={{ flexShrink: 0 }} />
+            <input
+              type="text"
+              placeholder="Search roles by title, department, or skill (e.g. AI, Architecture, Figma)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="ds-focus"
+              style={{
+                width: "100%",
+                border: "none",
+                backgroundColor: "transparent",
+                fontSize: "0.9375rem",
+                color: "var(--ink)",
+                outline: "none",
+              }}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "var(--muted)",
+                  fontSize: "0.8125rem",
+                  cursor: "pointer",
+                  padding: "4px 8px",
+                }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {/* Department Chips & Quick Candidate Jump */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+              <span style={{ fontSize: "0.75rem", color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginRight: "4px" }}>
+                Filter Dept:
+              </span>
+              {departments.map((dept) => {
+                const active = selectedDept === dept;
+                const count = dept === "ALL"
+                  ? jobs.length
+                  : jobs.filter((j) => j.department.toLowerCase().includes(dept.toLowerCase())).length;
+
+                return (
+                  <button
+                    key={dept}
+                    onClick={() => setSelectedDept(dept)}
+                    style={{
+                      backgroundColor: active ? "var(--ink)" : "var(--surface)",
+                      color: active ? "var(--paper)" : "var(--muted)",
+                      border: active ? "1px solid var(--ink)" : "1px solid var(--border)",
+                      borderRadius: "6px",
+                      padding: "4px 10px",
+                      fontSize: "0.75rem",
+                      fontWeight: 500,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    {dept === "ALL" ? `All Roles (${count})` : `${dept} (${count})`}
+                  </button>
+                );
+              })}
+            </div>
+
+            <Link
+              href="/candidate/dashboard"
+              style={{
+                fontSize: "0.8125rem",
+                color: "var(--accent)",
+                fontWeight: 500,
+                textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              Returning candidate? Access screening status →
+            </Link>
+          </div>
+        </Card>
+      </section>
+
+      {/* Featured Jobs Section */}
+      <section
+        id="open-positions"
+        style={{
+          padding: "20px 24px",
+          maxWidth: "1280px",
+          margin: "0 auto",
+          scrollMarginTop: "80px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-end",
+            marginBottom: "28px",
+            flexWrap: "wrap",
+            gap: "16px",
+          }}
+        >
+          <div>
+            <Eyebrow>FEATURED ROLES & OPPORTUNITIES</Eyebrow>
+            <h2
+              className="font-serif tracking-tight"
+              style={{
+                fontFamily: "var(--font-serif)",
+                fontSize: "2rem",
+                fontWeight: 600,
+                color: "var(--ink)",
+                lineHeight: 1.2,
+                margin: "4px 0",
+              }}
+            >
+              Featured Positions at Job.Com
+            </h2>
+            <p style={{ color: "var(--muted)", fontSize: "0.9375rem" }}>
+              Apply with 1-click and immediately begin your on-demand video interview assessment.
+            </p>
+          </div>
+
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <Link
+              href="/recruiter"
+              className="ds-btn-secondary"
+              style={{ padding: "8px 16px", fontSize: "0.875rem" }}
+            >
+              <PlusCircle size={15} color="var(--accent)" /> Post New Role
+            </Link>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {filteredJobs.length === 0 ? (
+            <Card style={{ padding: "40px", textAlign: "center" }}>
+              <p style={{ color: "var(--muted)", margin: 0 }}>
+                No positions found matching &quot;{searchQuery}&quot;. Try another search term.
+              </p>
+            </Card>
+          ) : (
+            filteredJobs.map((job) => {
+              const applicantCount = job._count?.sessions || 0;
+
+              return (
+                <Card
+                  key={job.id}
+                  style={{
+                    padding: "24px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                    gap: "24px",
+                  }}
+                >
+                  <div style={{ flex: "1 1 500px" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "12px",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      <h3
+                        className="font-serif"
+                        style={{
+                          fontSize: "1.25rem",
+                          fontWeight: 600,
+                          color: "var(--ink)",
+                          margin: 0,
+                        }}
+                      >
+                        {job.title}
+                      </h3>
+
+                      <StatusPill variant="good">
+                        Active Hiring
+                      </StatusPill>
+                    </div>
+
+                    <div
+                      style={{
+                        fontSize: "0.8125rem",
+                        color: "var(--muted)",
+                        marginBottom: "12px",
+                        display: "flex",
+                        gap: "6px",
+                        flexWrap: "wrap",
+                        alignItems: "center",
+                      }}
+                    >
+                      <span>{job.department}</span>
+                      <span>·</span>
+                      <span>{job.location}</span>
+                      <span>·</span>
+                      <span>{job.type}</span>
+                      <span>·</span>
+                      <span style={{ color: "var(--ink)", fontWeight: 500 }}>
+                        {job.salary}
+                      </span>
+                      <span>·</span>
+                      <span style={{ color: "var(--accent)", fontWeight: 500 }}>
+                        {applicantCount} applicant{applicantCount === 1 ? "" : "s"} screening
+                      </span>
+                      <span>·</span>
+                      <span style={{ color: "var(--muted)", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                        <Clock size={12} /> ~15 min assessment
+                      </span>
+                    </div>
+
+                    <p
+                      style={{
+                        color: "var(--muted)",
+                        fontSize: "0.875rem",
+                        lineHeight: 1.5,
+                        marginBottom: "14px",
+                      }}
+                    >
+                      {job.description}
+                    </p>
+
+                    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                      {(job.tags || ["Video Screening", "AI Evaluated", "High Priority"]).map((t) => (
+                        <Chip key={t}>{t}</Chip>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
+                      minWidth: "220px",
+                    }}
+                  >
+                    <button
+                      onClick={() => {
+                        setSelectedJobForApply(job);
+                        setApplyResult(null);
+                      }}
+                      className="ds-btn-primary"
+                      style={{ width: "100%", justifyContent: "center", cursor: "pointer" }}
+                    >
+                      <Video size={15} />
+                      1-Click Apply & Screen
+                    </button>
+                    <Link
+                      href="/recruiter"
+                      className="ds-btn-secondary"
+                      style={{ width: "100%", justifyContent: "center" }}
+                    >
+                      <Users size={15} />
+                      View Recruiter Queue
+                    </Link>
+                  </div>
+                </Card>
+              );
+            })
+          )}
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section
+        id="pricing"
+        style={{
+          padding: "50px 24px 20px",
+          maxWidth: "1280px",
+          margin: "0 auto",
+          scrollMarginTop: "80px",
+        }}
+      >
+        <div style={{ textAlign: "center", marginBottom: "36px" }}>
+          <Eyebrow>TRANSPARENT PLANS & PRICING</Eyebrow>
+          <h2
+            className="font-serif tracking-tight"
+            style={{
+              fontFamily: "var(--font-serif)",
+              fontSize: "clamp(2rem, 3.5vw, 2.6rem)",
+              fontWeight: 600,
+              color: "var(--ink)",
+              margin: "6px 0 12px",
+              lineHeight: 1.2,
+            }}
+          >
+            Predictable Pricing for High-Agency Teams
+          </h2>
+          <p style={{ color: "var(--muted)", fontSize: "1rem", maxWidth: "620px", margin: "0 auto 24px", lineHeight: 1.6 }}>
+            Eliminate scheduling ping-pong. Upgrade as your hiring requisition volume scales, with zero seat limits or hidden candidate surcharges.
+          </p>
+
+          {/* Billing Cycle Toggle */}
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "4px", backgroundColor: "var(--surface)", border: "1px solid var(--border)", borderRadius: "9999px" }}>
+            <button
+              onClick={() => setBillingCycle("monthly")}
+              style={{
+                padding: "6px 16px",
+                borderRadius: "9999px",
+                border: "none",
+                fontSize: "0.8125rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                backgroundColor: billingCycle === "monthly" ? "var(--ink)" : "transparent",
+                color: billingCycle === "monthly" ? "var(--paper)" : "var(--muted)",
+                transition: "all 0.15s ease",
+              }}
+            >
+              Monthly Billing
+            </button>
+            <button
+              onClick={() => setBillingCycle("annual")}
+              style={{
+                padding: "6px 16px",
+                borderRadius: "9999px",
+                border: "none",
+                fontSize: "0.8125rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                backgroundColor: billingCycle === "annual" ? "var(--ink)" : "transparent",
+                color: billingCycle === "annual" ? "var(--paper)" : "var(--muted)",
+                transition: "all 0.15s ease",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <span>Annual Billing</span>
+              <span style={{ fontSize: "0.6875rem", padding: "2px 6px", borderRadius: "9999px", backgroundColor: "rgba(16, 185, 129, 0.12)", color: "#059669", fontWeight: 700 }}>
+                SAVE 20%
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Pricing Cards Grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "24px", alignItems: "stretch" }}>
+          {/* Tier 1: Starter / Pilot */}
+          <Card
+            style={{
+              padding: "36px 30px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              border: "1px solid var(--border)",
+              backgroundColor: "var(--surface)",
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  STARTER PILOT
+                </span>
+                <StatusPill variant="neutral">Free Forever</StatusPill>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "baseline", gap: "6px", margin: "16px 0 10px" }}>
+                <span className="font-serif" style={{ fontSize: "2.8rem", fontWeight: 700, color: "var(--ink)", lineHeight: 1 }}>
+                  $0
+                </span>
+                <span style={{ color: "var(--muted)", fontSize: "0.9375rem" }}>/ month</span>
+              </div>
+
+              <p style={{ fontSize: "0.875rem", color: "var(--muted)", lineHeight: 1.5, marginBottom: "24px" }}>
+                For seed-stage startups and founding teams wanting to test video screening on key open positions.
+              </p>
+
+              <div style={{ borderTop: "1px solid var(--border)", paddingTop: "20px", marginBottom: "28px" }}>
+                <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--ink)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "14px" }}>
+                  What&apos;s Included:
+                </div>
+                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "10px", fontSize: "0.875rem", color: "var(--ink)" }}>
+                  <li style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Check size={16} color="var(--accent)" />
+                    <span>Up to <strong>3 active job requisitions</strong></span>
+                  </li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Check size={16} color="var(--accent)" />
+                    <span><strong>25 candidate video screenings</strong> / mo</span>
+                  </li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Check size={16} color="var(--accent)" />
+                    <span>Server-enforced deadline timers</span>
+                  </li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Check size={16} color="var(--accent)" />
+                    <span>Controlled 1-retake quota guard</span>
+                  </li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Check size={16} color="var(--accent)" />
+                    <span>14-day cloud recording retention</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <Link
+              href="/recruiter"
+              className="ds-btn-secondary"
+              style={{ width: "100%", justifyContent: "center", padding: "11px", fontSize: "0.9375rem", textDecoration: "none" }}
+            >
+              Start Free Screening
+            </Link>
+          </Card>
+
+          {/* Tier 2: Growth / Scale (Featured) */}
+          <Card
+            style={{
+              padding: "36px 30px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              border: "2px solid var(--accent)",
+              backgroundColor: "var(--paper)",
+              boxShadow: "0 8px 30px rgba(0,0,0,0.06)",
+              position: "relative",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                top: "-12px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                backgroundColor: "var(--accent)",
+                color: "#ffffff",
+                padding: "3px 14px",
+                borderRadius: "9999px",
+                fontSize: "0.6875rem",
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+              }}
+            >
+              RECOMMENDED · POPULAR
+            </div>
+
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  GROWTH & SCALE
+                </span>
+                <StatusPill variant="good">Full AI Suite</StatusPill>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "baseline", gap: "6px", margin: "16px 0 10px" }}>
+                <span className="font-serif" style={{ fontSize: "2.8rem", fontWeight: 700, color: "var(--ink)", lineHeight: 1 }}>
+                  {billingCycle === "annual" ? "$119" : "$149"}
+                </span>
+                <span style={{ color: "var(--muted)", fontSize: "0.9375rem" }}>
+                  / month {billingCycle === "annual" && <span style={{ fontSize: "0.75rem", color: "#059669" }}>(billed annually)</span>}
+                </span>
+              </div>
+
+              <p style={{ fontSize: "0.875rem", color: "var(--muted)", lineHeight: 1.5, marginBottom: "24px" }}>
+                For scaling engineering, product, and operations teams managing active multi-candidate pipelines.
+              </p>
+
+              <div style={{ borderTop: "1px solid var(--border)", paddingTop: "20px", marginBottom: "28px" }}>
+                <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--ink)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "14px" }}>
+                  Everything in Starter, plus:
+                </div>
+                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "10px", fontSize: "0.875rem", color: "var(--ink)" }}>
+                  <li style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Check size={16} color="var(--accent)" />
+                    <span><strong>Unlimited active job postings</strong></span>
+                  </li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Check size={16} color="var(--accent)" />
+                    <span><strong>250 candidate video screenings</strong> / mo</span>
+                  </li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Check size={16} color="var(--accent)" />
+                    <span><strong>Custom AI rubrics</strong> &amp; multi-dimensional scoring</span>
+                  </li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Check size={16} color="var(--accent)" />
+                    <span>Custom question time limits (30s – 300s)</span>
+                  </li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Check size={16} color="var(--accent)" />
+                    <span>Hiring committee printable PDF exports</span>
+                  </li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Check size={16} color="var(--accent)" />
+                    <span>90-day persistent video stream retention</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <Link
+              href="/register"
+              className="ds-btn-primary"
+              style={{ width: "100%", justifyContent: "center", padding: "12px", fontSize: "0.9375rem", textDecoration: "none" }}
+            >
+              Start 14-Day Free Pro Trial
+              <ArrowRight size={15} />
+            </Link>
+          </Card>
+
+          {/* Tier 3: Enterprise */}
+          <Card
+            style={{
+              padding: "36px 30px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              border: "1px solid var(--border)",
+              backgroundColor: "var(--surface)",
+            }}
+          >
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  ENTERPRISE CUSTOM
+                </span>
+                <StatusPill variant="neutral">SOC-2 & ATS</StatusPill>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "baseline", gap: "6px", margin: "16px 0 10px" }}>
+                <span className="font-serif" style={{ fontSize: "2.8rem", fontWeight: 700, color: "var(--ink)", lineHeight: 1 }}>
+                  Custom
+                </span>
+                <span style={{ color: "var(--muted)", fontSize: "0.9375rem" }}>volume tiers</span>
+              </div>
+
+              <p style={{ fontSize: "0.875rem", color: "var(--muted)", lineHeight: 1.5, marginBottom: "24px" }}>
+                For high-volume recruitment organizations requiring custom ATS webhooks, SSO, and dedicated compliance SLAs.
+              </p>
+
+              <div style={{ borderTop: "1px solid var(--border)", paddingTop: "20px", marginBottom: "28px" }}>
+                <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "var(--ink)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "14px" }}>
+                  Enterprise Capabilities:
+                </div>
+                <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "10px", fontSize: "0.875rem", color: "var(--ink)" }}>
+                  <li style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Check size={16} color="var(--accent)" />
+                    <span><strong>Unlimited candidate video screenings</strong></span>
+                  </li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Check size={16} color="var(--accent)" />
+                    <span>Greenhouse, Lever, Ashby & Workday webhooks</span>
+                  </li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Check size={16} color="var(--accent)" />
+                    <span>SAML / Okta SSO & role-based RBAC</span>
+                  </li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Check size={16} color="var(--accent)" />
+                    <span>Custom retention & zero-storage data options</span>
+                  </li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Check size={16} color="var(--accent)" />
+                    <span>99.99% server availability SLA</span>
+                  </li>
+                  <li style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Check size={16} color="var(--accent)" />
+                    <span>Dedicated Talent Success Partner</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <a
+              href="#contact"
+              className="ds-btn-secondary"
+              style={{ width: "100%", justifyContent: "center", padding: "11px", fontSize: "0.9375rem", textDecoration: "none" }}
+            >
+              Contact Enterprise Sales
+            </a>
+          </Card>
+        </div>
+
+        {/* Pricing Trust Badge */}
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "20px", marginTop: "32px", flexWrap: "wrap", fontSize: "0.8125rem", color: "var(--muted)" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+            <ShieldCheck size={15} color="var(--accent)" /> No credit card required for 14-day trial
+          </span>
+          <span>·</span>
+          <span>Cancel or switch plans anytime</span>
+          <span>·</span>
+          <span>SOC-2 Type II Certified infrastructure</span>
+        </div>
+      </section>
+
+      {/* Contact & Support Section (Resources) */}
+      <section
+        id="contact"
+        style={{
+          padding: "40px 24px 20px",
+          maxWidth: "1280px",
+          margin: "0 auto",
+          scrollMarginTop: "80px",
+        }}
+      >
+        <Card style={{ padding: "40px", border: "1px solid var(--border)", boxShadow: "0 4px 24px rgba(0,0,0,0.03)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "40px", alignItems: "start", marginBottom: "40px" }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                <Eyebrow>RESOURCES · GET IN TOUCH</Eyebrow>
+                <StatusPill variant="good">Support Online</StatusPill>
+              </div>
+              <h2
+                className="font-serif tracking-tight"
+                style={{
+                  fontFamily: "var(--font-serif)",
+                  fontSize: "2rem",
+                  fontWeight: 600,
+                  color: "var(--ink)",
+                  margin: "6px 0 12px",
+                  lineHeight: 1.2,
+                }}
+              >
+                Contact & Candidate Support
+              </h2>
+              <p style={{ color: "var(--muted)", fontSize: "0.9375rem", lineHeight: 1.6, marginBottom: "28px" }}>
+                Need help with an active video screening session, custom ATS webhook integration, or employer billing? Our engineering and support team responds promptly.
+              </p>
+
+              {/* Department Contact Channels */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "28px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{ width: "38px", height: "38px", borderRadius: "8px", backgroundColor: "var(--accent-soft)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent)", flexShrink: 0 }}>
+                    <Mail size={16} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "0.75rem", color: "var(--muted)", textTransform: "uppercase" }}>Candidate & AV Help (SLA &lt; 15 mins)</div>
+                    <a href="mailto:support@job.com" style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--ink)", textDecoration: "none" }}>support@job.com</a>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{ width: "38px", height: "38px", borderRadius: "8px", backgroundColor: "var(--accent-soft)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent)", flexShrink: 0 }}>
+                    <Briefcase size={16} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "0.75rem", color: "var(--muted)", textTransform: "uppercase" }}>Enterprise Hiring & Custom Rubrics</div>
+                    <a href="mailto:hiring@job.com" style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--ink)", textDecoration: "none" }}>hiring@job.com</a>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{ width: "38px", height: "38px", borderRadius: "8px", backgroundColor: "var(--accent-soft)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent)", flexShrink: 0 }}>
+                    <Phone size={16} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "0.75rem", color: "var(--muted)", textTransform: "uppercase" }}>Toll-Free Employer Advisory</div>
+                    <div style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--ink)" }}>+1 (800) 562-2661 · Ext. 4</div>
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{ width: "38px", height: "38px", borderRadius: "8px", backgroundColor: "var(--accent-soft)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent)", flexShrink: 0 }}>
+                    <ShieldCheck size={16} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: "0.75rem", color: "var(--muted)", textTransform: "uppercase" }}>Security, SOC-2 & Anti-Tamper Audit</div>
+                    <a href="mailto:security@job.com" style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--ink)", textDecoration: "none" }}>security@job.com</a>
+                  </div>
+                </div>
+              </div>
+
+              {/* Office Locations */}
+              <div style={{ borderTop: "1px solid var(--border)", paddingTop: "20px" }}>
+                <div style={{ fontSize: "0.75rem", color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "10px" }}>
+                  Global Headquarters & Hubs
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", fontSize: "0.8125rem" }}>
+                  <div>
+                    <div style={{ fontWeight: 600, color: "var(--ink)" }}>San Francisco (HQ)</div>
+                    <div style={{ color: "var(--muted)" }}>550 Montgomery St, Suite 400</div>
+                    <div style={{ color: "var(--muted)" }}>San Francisco, CA 94111</div>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, color: "var(--ink)" }}>New York Studio</div>
+                    <div style={{ color: "var(--muted)" }}>120 Broadway, 18th Floor</div>
+                    <div style={{ color: "var(--muted)" }}>New York, NY 10271</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Inquiry Form with Demo Preset Buttons */}
+            <div style={{ backgroundColor: "var(--surface)", padding: "28px", borderRadius: "12px", border: "1px solid var(--border)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                <h3 className="font-serif" style={{ fontSize: "1.2rem", fontWeight: 600, color: "var(--ink)", margin: 0 }}>
+                  Send a Message
+                </h3>
+                <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>Avg reply: ~12m</span>
+              </div>
+              <p style={{ fontSize: "0.8125rem", color: "var(--muted)", margin: "0 0 16px" }}>
+                Directly reaches our talent operations and technical engineering desk.
+              </p>
+
+              {/* Demo Preset Buttons */}
+              <div style={{ marginBottom: "16px" }}>
+                <div style={{ fontSize: "0.6875rem", color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "6px" }}>
+                  Quick Fill Demo Scenario:
+                </div>
+                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={() => fillSampleInquiry("candidate")}
+                    style={{
+                      padding: "4px 8px",
+                      borderRadius: "4px",
+                      border: "1px solid var(--border)",
+                      backgroundColor: "var(--paper)",
+                      fontSize: "0.6875rem",
+                      color: "var(--ink)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Candidate AV Help
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fillSampleInquiry("ats")}
+                    style={{
+                      padding: "4px 8px",
+                      borderRadius: "4px",
+                      border: "1px solid var(--border)",
+                      backgroundColor: "var(--paper)",
+                      fontSize: "0.6875rem",
+                      color: "var(--ink)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Enterprise ATS
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fillSampleInquiry("rubric")}
+                    style={{
+                      padding: "4px 8px",
+                      borderRadius: "4px",
+                      border: "1px solid var(--border)",
+                      backgroundColor: "var(--paper)",
+                      fontSize: "0.6875rem",
+                      color: "var(--ink)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Custom Rubrics
+                  </button>
+                </div>
+              </div>
+
+              {contactSent ? (
+                <div style={{ padding: "20px", textAlign: "center", backgroundColor: "var(--accent-soft)", borderRadius: "8px", border: "1px solid rgba(217, 119, 6, 0.2)" }}>
+                  <CheckCircle2 size={28} color="var(--accent)" style={{ margin: "0 auto 8px" }} />
+                  <div style={{ fontSize: "0.9375rem", fontWeight: 600, color: "var(--ink)", marginBottom: "4px" }}>
+                    Inquiry Dispatched to Support
+                  </div>
+                  <p style={{ fontSize: "0.8125rem", color: "var(--muted)", margin: "0 0 14px", lineHeight: 1.5 }}>
+                    Ticket #JP-8429 opened for <strong>{contactEmail}</strong>. Our on-duty talent specialist will contact you shortly.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setContactSent(false);
+                      setContactName("");
+                      setContactEmail("");
+                      setContactMessage("");
+                    }}
+                    style={{
+                      padding: "6px 14px",
+                      borderRadius: "6px",
+                      border: "1px solid var(--border)",
+                      backgroundColor: "var(--paper)",
+                      fontSize: "0.75rem",
+                      color: "var(--ink)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Send Another Inquiry
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleContactSubmit} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.8125rem", fontWeight: 500, color: "var(--ink)", marginBottom: "6px" }}>
+                      Your Full Legal Name
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Sarah Jenkins"
+                      value={contactName}
+                      onChange={(e) => setContactName(e.target.value)}
+                      className="ds-focus"
+                      style={{
+                        width: "100%",
+                        padding: "9px 12px",
+                        borderRadius: "7px",
+                        border: "1px solid var(--border)",
+                        backgroundColor: "var(--paper)",
+                        fontSize: "0.875rem",
+                        color: "var(--ink)",
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.8125rem", fontWeight: 500, color: "var(--ink)", marginBottom: "6px" }}>
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="you@company.com or candidate email"
+                      value={contactEmail}
+                      onChange={(e) => setContactEmail(e.target.value)}
+                      className="ds-focus"
+                      style={{
+                        width: "100%",
+                        padding: "9px 12px",
+                        borderRadius: "7px",
+                        border: "1px solid var(--border)",
+                        backgroundColor: "var(--paper)",
+                        fontSize: "0.875rem",
+                        color: "var(--ink)",
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.8125rem", fontWeight: 500, color: "var(--ink)", marginBottom: "6px" }}>
+                      Message or Technical Issue
+                    </label>
+                    <textarea
+                      rows={3}
+                      required
+                      placeholder="Describe your inquiry, screening token, or platform question..."
+                      value={contactMessage}
+                      onChange={(e) => setContactMessage(e.target.value)}
+                      className="ds-focus"
+                      style={{
+                        width: "100%",
+                        padding: "9px 12px",
+                        borderRadius: "7px",
+                        border: "1px solid var(--border)",
+                        backgroundColor: "var(--paper)",
+                        fontSize: "0.875rem",
+                        color: "var(--ink)",
+                        resize: "vertical",
+                      }}
+                    />
+                  </div>
+
+                  <PrimaryButton type="submit" style={{ padding: "10px", justifyContent: "center" }}>
+                    Send Message
+                  </PrimaryButton>
+                </form>
+              )}
+            </div>
+          </div>
+
+          {/* Quick FAQ Strip */}
+          <div style={{ borderTop: "1px solid var(--border)", paddingTop: "28px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+              <HelpCircle size={16} color="var(--accent)" />
+              <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--ink)" }}>Frequently Asked Screening Questions</span>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
+              <div style={{ padding: "14px", backgroundColor: "var(--surface)", borderRadius: "8px", border: "1px solid var(--border)" }}>
+                <div style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--ink)", marginBottom: "4px" }}>
+                  Can I retake a video question?
+                </div>
+                <p style={{ fontSize: "0.75rem", color: "var(--muted)", margin: 0, lineHeight: 1.45 }}>
+                  Retakes are governed by the hiring company (typically 1 retake allowed). If permitted, you will see a &quot;Retake&quot; button after stopping your recording.
+                </p>
+              </div>
+              <div style={{ padding: "14px", backgroundColor: "var(--surface)", borderRadius: "8px", border: "1px solid var(--border)" }}>
+                <div style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--ink)", marginBottom: "4px" }}>
+                  What if my internet connection drops?
+                </div>
+                <p style={{ fontSize: "0.75rem", color: "var(--muted)", margin: 0, lineHeight: 1.45 }}>
+                  Your session token saves your place. Reopen your private interview link anytime to resume where you left off.
+                </p>
+              </div>
+              <div style={{ padding: "14px", backgroundColor: "var(--surface)", borderRadius: "8px", border: "1px solid var(--border)" }}>
+                <div style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--ink)", marginBottom: "4px" }}>
+                  Is my camera continuously monitored?
+                </div>
+                <p style={{ fontSize: "0.75rem", color: "var(--muted)", margin: 0, lineHeight: 1.45 }}>
+                  No. Video is strictly recorded only during active question countdowns when the red recording badge is illuminated.
+                </p>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </section>
+
+      {/* 1-Click Apply Modal */}
+      {selectedJobForApply && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.55)",
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: "20px",
+          }}
+        >
+          <Card
+            style={{
+              maxWidth: "520px",
+              width: "100%",
+              padding: "28px",
+              position: "relative",
+              maxHeight: "90vh",
+              overflowY: "auto",
+            }}
+          >
+            <button
+              onClick={() => setSelectedJobForApply(null)}
+              style={{
+                position: "absolute",
+                top: "20px",
+                right: "20px",
+                background: "transparent",
+                border: "none",
+                color: "var(--muted)",
+                cursor: "pointer",
+              }}
+            >
+              <X size={20} />
+            </button>
+
+            {!applyResult ? (
+              <form onSubmit={handleApplySubmit}>
+                <Eyebrow>1-CLICK APPLICATION</Eyebrow>
+                <h2
+                  className="font-serif"
+                  style={{
+                    fontSize: "1.4rem",
+                    fontWeight: 600,
+                    color: "var(--ink)",
+                    margin: "4px 0 8px",
+                  }}
+                >
+                  Apply for {selectedJobForApply.title}
+                </h2>
+
+                <div
+                  style={{
+                    fontSize: "0.8125rem",
+                    color: "var(--muted)",
+                    marginBottom: "18px",
+                  }}
+                >
+                  <span>{selectedJobForApply.department}</span> · <span>{selectedJobForApply.location}</span> · <span>{selectedJobForApply.salary}</span>
+                </div>
+
+                <div
+                  style={{
+                    padding: "14px",
+                    backgroundColor: "var(--surface)",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border)",
+                    marginBottom: "20px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                    <Sparkles size={16} color="var(--accent)" />
+                    <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--ink)" }}>
+                      On-Demand Video Interview Workflow
+                    </span>
+                  </div>
+                  <p style={{ fontSize: "0.75rem", color: "var(--muted)", margin: 0, lineHeight: 1.4 }}>
+                    Upon applying, you will be instantly issued a personal interview session token. You can immediately launch the camera room, answer 3 role-calibrated prompts, and receive comprehensive rubric evaluations.
+                  </p>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "14px", marginBottom: "24px" }}>
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        fontSize: "0.8125rem",
+                        fontWeight: 500,
+                        color: "var(--ink)",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      Full Legal Name
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Alex Mercer"
+                      value={applicantName}
+                      onChange={(e) => setApplicantName(e.target.value)}
+                      className="ds-focus"
+                      style={{
+                        width: "100%",
+                        padding: "10px 12px",
+                        borderRadius: "8px",
+                        border: "1px solid var(--border)",
+                        backgroundColor: "var(--paper)",
+                        fontSize: "0.875rem",
+                        color: "var(--ink)",
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      style={{
+                        display: "block",
+                        fontSize: "0.8125rem",
+                        fontWeight: 500,
+                        color: "var(--ink)",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      Work / Contact Email Address
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="e.g. alex.mercer@example.com"
+                      value={applicantEmail}
+                      onChange={(e) => setApplicantEmail(e.target.value)}
+                      className="ds-focus"
+                      style={{
+                        width: "100%",
+                        padding: "10px 12px",
+                        borderRadius: "8px",
+                        border: "1px solid var(--border)",
+                        backgroundColor: "var(--paper)",
+                        fontSize: "0.875rem",
+                        color: "var(--ink)",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+                  <SecondaryButton
+                    type="button"
+                    onClick={() => setSelectedJobForApply(null)}
+                    style={{ padding: "8px 16px" }}
+                  >
+                    Cancel
+                  </SecondaryButton>
+                  <PrimaryButton
+                    type="submit"
+                    disabled={isApplying}
+                    style={{ padding: "8px 20px" }}
+                  >
+                    {isApplying ? "Provisioning Room..." : "Submit & Launch Screening Room"}
+                  </PrimaryButton>
+                </div>
+              </form>
+            ) : (
+              <div>
+                <div style={{ textAlign: "center", marginBottom: "20px" }}>
+                  <div
+                    style={{
+                      width: "48px",
+                      height: "48px",
+                      borderRadius: "50%",
+                      backgroundColor: "var(--accent-soft)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      margin: "0 auto 12px",
+                      color: "var(--accent)",
+                    }}
+                  >
+                    <CheckCircle2 size={28} />
+                  </div>
+                  <Eyebrow>APPLICATION CONFIRMED</Eyebrow>
+                  <h3
+                    className="font-serif"
+                    style={{ fontSize: "1.4rem", fontWeight: 600, color: "var(--ink)", margin: "4px 0" }}
+                  >
+                    {applyResult.alreadyApplied ? "Existing Session Restored!" : "Screening Room Ready!"}
+                  </h3>
+                  <p style={{ fontSize: "0.875rem", color: "var(--muted)", margin: "0 auto" }}>
+                    {applyResult.message}
+                  </p>
+                </div>
+
+                <div
+                  style={{
+                    padding: "14px",
+                    backgroundColor: "var(--surface)",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border)",
+                    marginBottom: "20px",
+                  }}
+                >
+                  <div style={{ fontSize: "0.75rem", color: "var(--muted)", marginBottom: "4px" }}>
+                    YOUR INTERVIEW TOKEN
+                  </div>
+                  <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--ink)", fontFamily: "monospace" }}>
+                    {applyResult.token}
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <Link
+                    href={applyResult.interviewUrl}
+                    className="ds-btn-primary"
+                    style={{ width: "100%", justifyContent: "center", padding: "12px", fontSize: "0.9375rem" }}
+                  >
+                    <Play size={16} fill="#ffffff" />
+                    Enter Video Screening Room Now
+                  </Link>
+
+                  <SecondaryButton
+                    onClick={() => copyUrl(applyResult.interviewUrl)}
+                    style={{ width: "100%", justifyContent: "center", padding: "10px" }}
+                  >
+                    <Copy size={15} />
+                    {copiedLink ? "Link Copied to Clipboard!" : "Copy Private Interview Link"}
+                  </SecondaryButton>
+
+                  <Link
+                    href={`/candidate/dashboard?email=${encodeURIComponent(applicantEmail)}`}
+                    style={{
+                      textAlign: "center",
+                      fontSize: "0.8125rem",
+                      color: "var(--accent)",
+                      marginTop: "6px",
+                      textDecoration: "underline",
+                    }}
+                  >
+                    Track All My Applications in Candidate Workspace →
+                  </Link>
+                </div>
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
+    </main>
+  );
+}

@@ -1,0 +1,31 @@
+{
+  "name": "job-com",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -H 0.0.0.0",
+    "dev:lan": "next dev -H 0.0.0.0",
+    "build": "next build",
+    "start": "next start",
+    "postinstall": "prisma generate",
+    "page:list": "node scripts/version-manager.js list",
+    "page:snapshot": "node scripts/version-manager.js snapshot",
+    "page:restore": "node scripts/version-manager.js restore",
+    "share": "npx -y localtunnel --port 3000",
+    "test": "node scripts/run-all-tests.mjs"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.4.1",
+    "lucide-react": "^0.475.0",
+    "next": "^15.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "prisma": "^6.4.1",
+    "typescript": "^5.7.3"
+  }
+}
